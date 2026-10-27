@@ -1,0 +1,1447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AHP Decision Calculator</title>
+<style>
+:root{
+  --bg:#f6f6f3; --surface:#ffffff; --surface-2:#f1f0ec; --line:#dedcd5; --line-2:#c9c8c3;
+  --text:#1b1b19; --text-2:#52514e; --muted:#8a8984;
+  --accent:#2a78d6; --accent-soft:#e3eefb; --accent-ink:#1c5cab;
+  --ok:#1f7a3a; --ok-soft:#e3f2e7; --bad:#b42318; --bad-soft:#fde8e6; --warn:#9a6700; --warn-soft:#fff4d6;
+  --input:#fffbe6; --draft:#fbfaf6; --radius:10px;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+header.app{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.wrap{max-width:1240px;margin:0 auto;padding:0 16px}
+.topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 0}
+.brand{display:flex;flex-direction:column;margin-right:auto;min-width:220px}
+.brand b{font-size:17px;letter-spacing:.2px}
+.brand span{font-size:12px;color:var(--text-2)}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.btn{border:1px solid var(--line-2);background:var(--surface);border-radius:8px;padding:6px 11px;cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-ink)}
+.btn.small{padding:3px 8px;font-size:12.5px}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+select.sel{border:1px solid var(--line-2);border-radius:8px;padding:6px 8px;background:var(--surface)}
+nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:thin}
+nav.tabs button{border:0;background:none;padding:10px 13px;cursor:pointer;border-bottom:3px solid transparent;color:var(--text-2);white-space:nowrap;display:flex;gap:7px;align-items:center}
+nav.tabs button.active{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
+.num{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--surface-2);font-size:11.5px;font-weight:600}
+nav.tabs button.active .num{background:var(--accent);color:#fff}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.dot.ok{background:var(--ok)} .dot.bad{background:var(--bad)} .dot.warn{background:var(--warn)}
+main{padding:18px 0 60px}
+section.tab{display:none} section.tab.active{display:block}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:14px}
+.card h2{font-size:16px;margin:0 0 4px} .card h3{font-size:14.5px;margin:14px 0 6px}
+.sub{color:var(--text-2);margin:0 0 12px;font-size:13px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid2>*,.with-aside>*{min-width:0}
+.with-aside{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:14px;align-items:start}
+@media (max-width:980px){.with-aside{grid-template-columns:1fr}}
+@media (max-width:860px){.grid2{grid-template-columns:1fr}}
+aside.guide{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:var(--radius);padding:14px 16px;position:sticky;top:120px;font-size:13px}
+@media (max-width:980px){aside.guide{position:static}}
+aside.guide h3{font-size:14px;margin:0 0 6px;display:flex;gap:6px;align-items:center}
+aside.guide h4{font-size:13px;margin:12px 0 4px}
+aside.guide p,aside.guide li{color:var(--text-2);margin:4px 0}
+aside.guide ol,aside.guide ul{padding-left:18px;margin:4px 0}
+aside.guide .ex{background:var(--surface-2);border-radius:7px;padding:7px 9px;margin-top:6px}
+table{border-collapse:collapse}
+.tbl{width:100%;font-size:13px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:5px 7px;text-align:center}
+.tbl th{background:var(--surface-2);font-weight:600}
+.tbl td.l,.tbl th.l{text-align:left}
+.tbl tr.best td{background:var(--ok-soft);font-weight:600}
+.scroll{overflow-x:auto;max-width:100%}
+.mx th.rh{text-align:left;white-space:nowrap}
+.mx td{padding:3px}
+.mx input{width:64px;text-align:center;border:1px solid var(--line-2);border-radius:6px;padding:4px 2px;background:var(--input)}
+.mx input:focus{outline:2px solid var(--accent);outline-offset:0}
+.mx input.err{border-color:var(--bad);background:var(--bad-soft)}
+.mx input.empty{background:#fff;border-style:dashed}
+.mx td.diag{background:var(--surface-2);color:var(--muted)}
+.mx td.recip{color:var(--text-2);background:#fafaf8;font-variant-numeric:tabular-nums}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.badge.ok{background:var(--ok-soft);color:var(--ok)} .badge.bad{background:var(--bad-soft);color:var(--bad)} .badge.warn{background:var(--warn-soft);color:var(--warn)} .badge.neutral{background:var(--surface-2);color:var(--text-2)}
+.kpis{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+.kpi{background:var(--surface-2);border-radius:8px;padding:6px 10px;min-width:92px}
+.kpi small{display:block;color:var(--text-2);font-size:11.5px}
+.kpi b{font-variant-numeric:tabular-nums}
+.note{border-left:3px solid var(--warn);background:var(--warn-soft);padding:8px 11px;border-radius:6px;margin:10px 0;font-size:13px}
+.note.bad{border-color:var(--bad);background:var(--bad-soft)}
+.note.info{border-color:var(--accent);background:var(--accent-soft)}
+.note.ok{border-color:var(--ok);background:var(--ok-soft)}
+/* setup lists */
+.ilist{border-top:1px solid var(--line)}
+.irow{display:grid;grid-template-columns:34px 26px minmax(140px,1fr) 92px 118px 150px auto;gap:8px;align-items:center;padding:7px 4px;border-bottom:1px solid var(--line)}
+.ilist.alts .irow{grid-template-columns:34px 26px minmax(160px,1fr) 150px auto}
+.irow.draft{background:var(--draft)}
+.irow.draft input[type=text]{border-style:dashed}
+.irow input[type=text],.irow select{width:100%;border:1px solid var(--line-2);border-radius:7px;padding:5px 8px;background:var(--surface)}
+.irow input.need{border-color:var(--bad);background:var(--bad-soft)}
+.irow .acts{display:flex;gap:2px;justify-content:flex-end;flex-wrap:wrap}
+.ihead{display:grid;grid-template-columns:34px 26px minmax(140px,1fr) 92px 118px 150px auto;gap:8px;padding:6px 4px;font-size:12px;color:var(--text-2);font-weight:600}
+.ilist.alts .ihead{grid-template-columns:34px 26px minmax(160px,1fr) 150px auto}
+@media (max-width:760px){.irow,.ihead,.ilist.alts .irow,.ilist.alts .ihead{grid-template-columns:30px 24px 1fr}.irow>*:nth-child(n+4){grid-column:3}.ihead{display:none}}
+.code{font-weight:600;color:var(--text-2)}
+.chk{width:18px;height:18px;accent-color:var(--accent);cursor:pointer}
+.callout{display:flex;gap:12px;align-items:flex-start;background:var(--accent-soft);border:1px solid #c5dbf5;border-radius:var(--radius);padding:12px 14px;margin-bottom:14px}
+.callout .ic{font-size:20px;line-height:1}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.pill{border:1px solid var(--line-2);border-radius:999px;padding:5px 11px;background:var(--surface);cursor:pointer;display:flex;gap:6px;align-items:center;font-size:13px}
+.pill.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:6px 12px;cursor:pointer}
+.seg button.on{background:var(--accent);color:#fff}
+.hero{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.hero .big{font-size:26px;font-weight:700}
+.hero .score{font-size:15px;color:var(--text-2)}
+details{margin-top:10px} summary{cursor:pointer;color:var(--accent-ink);font-weight:600;font-size:13px}
+.chart{width:100%;height:auto;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12.5px;color:var(--text-2);margin-top:6px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.mono{font-variant-numeric:tabular-nums}
+.foot{color:var(--muted);font-size:12px;text-align:center;margin-top:20px}
+/* guided input */
+.wz-top{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.progress{height:8px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin:8px 0 4px}
+.progress i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .2s}
+.qtext{font-size:16px;margin:10px 0 12px}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:stretch;margin-bottom:12px}
+.vs .side{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface)}
+.vs .side.l{border-top:4px solid var(--s1)} .vs .side.r{border-top:4px solid var(--s2)}
+.vs .side b{font-size:15px}
+.vs .side textarea{width:100%;margin-top:6px;border:1px dashed var(--line-2);border-radius:6px;padding:5px 7px;font-size:12.5px;color:var(--text-2);resize:vertical;min-height:44px;background:var(--draft)}
+.vs .mid{align-self:center;color:var(--muted);font-weight:700}
+@media (max-width:640px){.vs{grid-template-columns:1fr}.vs .mid{text-align:center}}
+.scale{display:grid;grid-template-columns:repeat(17,minmax(0,1fr));gap:3px;margin:6px 0 2px}
+.scale button{border:1px solid var(--line-2);background:var(--surface);border-radius:7px;padding:9px 0;cursor:pointer;font-weight:600;font-variant-numeric:tabular-nums}
+.scale button.L{border-color:#b9d3f2} .scale button.R{border-color:#f5c3ab}
+.scale button:hover{background:var(--surface-2)}
+.scale button.sel.L{background:var(--s1);color:#fff;border-color:var(--s1)}
+.scale button.sel.R{background:var(--s2);color:#fff;border-color:var(--s2)}
+.scale button.sel.E{background:#52514e;color:#fff;border-color:#52514e}
+.scale-lab{display:grid;grid-template-columns:repeat(17,minmax(0,1fr));gap:3px;font-size:10.5px;color:var(--text-2);text-align:center;line-height:1.15}
+.scale-sides{display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-top:2px}
+.scale-sides .a{color:var(--s1)} .scale-sides .b{color:#c4501f}
+@media (max-width:640px){.scale{grid-template-columns:repeat(9,minmax(0,1fr))}.scale-lab{display:none}}
+.answer{min-height:22px;margin-top:8px;font-size:13.5px}
+.wz-nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.qlist{display:flex;flex-wrap:wrap;gap:4px;margin-top:12px}
+.qlist button{width:26px;height:22px;border-radius:5px;border:1px solid var(--line-2);background:var(--surface);font-size:11px;cursor:pointer;padding:0}
+.qlist button.done{background:var(--ok-soft);border-color:#9fd0ad}
+.qlist button.cur{outline:2px solid var(--accent)}
+body.editing [data-t]{outline:1.5px dashed var(--accent);outline-offset:2px;cursor:text;background:rgba(42,120,214,.06);border-radius:3px}
+body.editing [data-t]:focus{outline-style:solid;background:#fff}
+.editbar{display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--accent-soft);border:1px solid #c5dbf5;border-radius:8px;padding:7px 10px;margin:0 0 8px;font-size:13px}
+body.editing .editbar{display:flex}
+body.editing #bEdit{background:var(--accent);color:#fff;border-color:var(--accent)}
+.acct{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--text-2);margin:-4px 0 8px}
+.acct .who{display:inline-flex;align-items:center;gap:6px;font-weight:600;color:var(--text)}
+.acct .av{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;display:inline-grid;place-items:center;font-size:11px;font-weight:700;overflow:hidden}
+.acct .av img{width:100%;height:100%}
+.gbtn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-2);background:#fff;border-radius:8px;padding:5px 11px;cursor:pointer;font-weight:600}
+.gbtn svg{width:16px;height:16px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1b1b19;color:#fff;padding:8px 14px;border-radius:8px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:50}
+.toast.show{opacity:.95}
+input[type=file]{display:none}
+@media print{
+  header.app{position:static} .toolbar,nav.tabs,.noprint,aside.guide{display:none!important}
+  .with-aside{display:block}
+  section.tab{display:block!important;break-before:page} section.tab:first-of-type{break-before:auto}
+  #t-guide{display:none!important}
+  .card{break-inside:avoid;border-color:#bbb} body{background:#fff}
+}
+</style>
+</head>
+<body>
+<header class="app">
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand"><b data-t="app.title">AHP Decision Calculator</b><span id="goalLine">Analytic Hierarchy Process · Saaty</span></div>
+      <div class="toolbar">
+        <label class="noprint" style="font-size:12.5px;color:var(--text-2)">Method
+          <select id="method" class="sel" title="Method used to derive priority vectors"></select></label>
+        <button class="btn" id="bEdit" title="Change titles, tab names, descriptions and guide texts">✎ Edit texts</button>
+        <button class="btn" id="bExample" title="Load the example model (with two draft slots)">Load example</button>
+        <button class="btn" id="bNew">New</button>
+        <button class="btn" id="bOpen">Open…</button>
+        <button class="btn" id="bSave">Save</button>
+        <button class="btn" id="bCsv">Export CSV</button>
+        <button class="btn" id="bPrint">Print</button>
+        <input type="file" id="fileIn" accept=".json,application/json">
+      </div>
+    </div>
+    <div id="acct" class="acct noprint"></div>
+    <div id="editBar" class="editbar noprint"><span>✎ <b>Edit mode</b> – click any text with a dashed outline and type. Changes are saved <span id="editWhere">in this browser</span>. Formulas and technical labels (λmax, CR…) cannot be changed.</span>
+      <span style="display:flex;gap:6px"><button class="btn small" id="bResetTexts">Reset all texts</button><button class="btn small primary" id="bEditDone">Done</button></span></div>
+    <nav class="tabs" id="tabs"></nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="tab" id="t-setup">
+    <div class="with-aside">
+      <div>
+        <div class="callout noprint" id="setupCallout"></div>
+        <div class="card">
+          <h2 data-t="setup.title">1 · Decision set-up</h2>
+          <p class="sub" data-t="setup.sub" data-t-rich>Define the goal, the criteria (Level 2) and the companies / alternatives (Level 3). Tick <b>Use</b> to include an item in the calculation; unticked items are <b>drafts</b> – their names and judgments are kept but they do not affect the results.</p>
+          <label style="display:block;margin-bottom:12px"><span data-t="setup.goal">Goal</span>
+            <input type="text" id="goal" style="width:100%;border:1px solid var(--line-2);border-radius:7px;padding:6px 9px;margin-top:4px"></label>
+          <h3><span data-t="setup.crit">Criteria</span> <span class="badge neutral" id="nCrit"></span></h3>
+          <div class="ilist" id="critList"></div>
+          <button class="btn small" id="addCrit" style="margin-top:8px">+ Add a new criterion</button>
+          <h3 style="margin-top:20px"><span data-t="setup.alts">Companies / alternatives</span> <span class="badge neutral" id="nAlt"></span></h3>
+          <div class="ilist alts" id="altList"></div>
+          <button class="btn small" id="addAlt" style="margin-top:8px">+ Add a new company</button>
+          <div id="sizeNote"></div>
+        </div>
+      </div>
+      <aside class="guide" id="guideSetup"></aside>
+    </div>
+  </section>
+
+  <section class="tab" id="t-guide">
+    <div class="with-aside">
+      <div class="card" id="wizard"></div>
+      <aside class="guide" id="guideWizard"></aside>
+    </div>
+  </section>
+
+  <section class="tab" id="t-criteria">
+    <div class="card">
+      <h2 data-t="crit.title">3 · Pairwise comparison matrix of the criteria</h2>
+      <p class="sub" data-t="crit.sub" data-t-rich>Matrix view of the judgments for the criteria in use (drafts are hidden; evaluate them in <b>Guided input</b>). Enter how much more important the <b>row</b> criterion is than the <b>column</b> criterion. Accepted inputs: <span class="mono">3</span>, <span class="mono">1/3</span>, <span class="mono">2/3</span>, <span class="mono">1 1/2</span>, <span class="mono">1.5</span>.</p>
+      <div class="noprint" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="btn small" data-fill="crit">Fill empty cells with 1</button>
+        <button class="btn small" data-wiz="critmatrix">Answer step by step…</button>
+      </div>
+      <div class="scroll" id="critMatrix"></div>
+      <div id="critResult"></div>
+      <details class="noprint"><summary>Saaty fundamental scale</summary><div id="saaty"></div></details>
+    </div>
+  </section>
+
+  <section class="tab" id="t-alts">
+    <div class="card">
+      <h2 data-t="alts.title">4 · Companies under each criterion</h2>
+      <p class="sub" data-t="alts.sub" data-t-rich>Choose a criterion, then compare the companies pairwise (standard AHP) or, for measurable criteria, enter direct ratings (ratio-scale values such as years, staff or fees).</p>
+      <div class="pills" id="critPills"></div>
+      <div id="altPanel"></div>
+    </div>
+  </section>
+
+  <section class="tab" id="t-results">
+    <div id="results"></div>
+  </section>
+
+  <section class="tab" id="t-sens">
+    <div class="card">
+      <h2 data-t="sens.title">6 · Sensitivity analysis</h2>
+      <p class="sub" data-t="sens.sub" data-t-rich>Vary the weight of one criterion from 0 to 1; the other criteria keep their relative proportions. The dashed line marks the current weight.</p>
+      <label>Criterion <select id="sensCrit" class="sel"></select></label>
+      <div id="sensOut" style="margin-top:12px"></div>
+    </div>
+  </section>
+  <p class="foot">Priorities, λmax, CI = (λmax − n)/(n − 1), CR = CI/RI with Saaty's RI (n = 1…15). Accept a matrix when CR ≤ 0.10. <span id="footStore">All calculations run locally in this file.</span></p>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+/* AHP core – pure functions, no DOM. Used by the web app and by the Node tests. */
+(function (root) {
+  'use strict';
+  // Saaty random index, n = 1..15 (course lecture "Analytic Hierarchy Process", slide 18)
+  const RI = [0, 0, 0, 0.58, 0.90, 1.12, 1.24, 1.32, 1.41, 1.45, 1.49, 1.51, 1.48, 1.56, 1.57, 1.59];
+  const SAATY = [1 / 9, 1 / 8, 1 / 7, 1 / 6, 1 / 5, 1 / 4, 1 / 3, 1 / 2, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  const MIN_V = 1 / 9 - 1e-9, MAX_V = 9 + 1e-9;
+
+  /** Parse "3", "1/3", "2/3", "1 1/2", "1.5", "1,5", "=1/3" → number (NaN if invalid). */
+  function parseValue(str) {
+    if (typeof str === 'number') return isFinite(str) && str > 0 ? str : NaN;
+    if (str == null) return NaN;
+    let s = String(str).trim().replace(/^=/, '').replace(',', '.');
+    if (!s) return NaN;
+    let m;
+    if ((m = s.match(/^(\d+)\s+(\d+)\s*\/\s*(\d+)$/))) { const d = +m[3]; return d > 0 ? +m[1] + +m[2] / d : NaN; }
+    if ((m = s.match(/^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/))) { const d = +m[2]; return d > 0 && +m[1] > 0 ? +m[1] / d : NaN; }
+    if (/^\d+(?:\.\d+)?$/.test(s)) { const v = +s; return v > 0 ? v : NaN; }
+    return NaN;
+  }
+  const inRange = v => isFinite(v) && v >= MIN_V && v <= MAX_V;
+
+  /** Readable fraction for a positive number: 3, 1/3, 2/3, 1 1/2 … */
+  function toFraction(x) {
+    if (!isFinite(x) || x <= 0) return '';
+    for (let q = 1; q <= 9; q++) {
+      const p = Math.round(x * q);
+      if (p > 0 && Math.abs(x - p / q) < 1e-9) {
+        if (q === 1) return String(p);
+        if (p < q) return `${p}/${q}`;
+        const w = Math.floor(p / q), r = p - w * q;
+        return r === 0 ? String(w) : `${w} ${r}/${q}`;
+      }
+    }
+    return x.toFixed(3);
+  }
+
+  /** Full reciprocal matrix from an upper-triangle map {"i,j": value} (i<j). Missing → NaN. */
+  function buildMatrix(n, upper) {
+    const A = Array.from({ length: n }, () => Array(n).fill(1));
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      const v = parseValue(upper[`${i},${j}`]);
+      A[i][j] = v; A[j][i] = 1 / v;
+    }
+    return A;
+  }
+  const matrixValid = A => A.every(r => r.every(inRange));
+
+  const sum = a => a.reduce((s, x) => s + x, 0);
+  const mulVec = (A, w) => A.map(r => r.reduce((s, a, j) => s + a * w[j], 0));
+
+  // ---- priority vectors -------------------------------------------------------------
+  function weightsNormalisedAverage(A) {
+    const n = A.length;
+    const colSum = A[0].map((_, j) => sum(A.map(r => r[j])));
+    const norm = A.map(r => r.map((a, j) => a / colSum[j]));
+    const w = norm.map(r => sum(r) / n);
+    return { w, colSum, norm };
+  }
+  function weightsGeometricMean(A) {
+    const n = A.length;
+    const g = A.map(r => Math.exp(sum(r.map(Math.log)) / n));
+    const s = sum(g);
+    return { w: g.map(x => x / s), rowGeo: g };
+  }
+  function weightsEigenvector(A, tol = 1e-13, maxIter = 10000) {
+    let w = weightsGeometricMean(A).w, lam = A.length, it = 0;
+    for (; it < maxIter; it++) {
+      const Aw = mulVec(A, w), s = sum(Aw);
+      const nw = Aw.map(x => x / s);
+      const diff = Math.max(...nw.map((x, i) => Math.abs(x - w[i])));
+      w = nw; lam = s; // since sum(w)=1, sum(Aw) → λmax at convergence
+      if (diff < tol) break;
+    }
+    return { w, lambda: lam, iterations: it + 1 };
+  }
+
+  /** Consistency: λmax = mean((Aw)i / wi), CI = (λ−n)/(n−1), CR = CI/RI(n). */
+  function consistency(A, w) {
+    const n = A.length;
+    const Aw = mulVec(A, w);
+    const ratio = Aw.map((x, i) => x / w[i]);
+    const lambda = n === 1 ? 1 : sum(ratio) / n;
+    const CI = n <= 2 ? 0 : (lambda - n) / (n - 1);
+    const ri = n < RI.length ? RI[n] : RI[RI.length - 1];
+    const CR = n <= 2 ? 0 : CI / ri;
+    return { Aw, ratio, lambda, CI, RI: ri, CR, ok: CR <= 0.1 + 1e-12 };
+  }
+
+  const METHODS = {
+    average: { label: 'Normalised column average (course method)', fn: A => weightsNormalisedAverage(A).w },
+    geometric: { label: 'Geometric mean of rows', fn: A => weightsGeometricMean(A).w },
+    eigen: { label: 'Principal eigenvector (power iteration)', fn: A => weightsEigenvector(A).w }
+  };
+
+  /** Full analysis of one pairwise matrix with the chosen method. */
+  function analysePairwise(A, method = 'average') {
+    const w = METHODS[method].fn(A);
+    const c = consistency(A, w);
+    return Object.assign({ w }, c, { detail: weightsNormalisedAverage(A) });
+  }
+
+  /** Most inconsistent judgment and a suggested Saaty value (with the CR it would give). */
+  function suggestRevision(A, method = 'average') {
+    const n = A.length; if (n < 3) return null;
+    const w = METHODS[method].fn(A);
+    let best = null;
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      const e = A[i][j] * w[j] / w[i];
+      const dev = Math.max(e, 1 / e);
+      if (!best || dev > best.dev) best = { i, j, dev, current: A[i][j] };
+    }
+    const target = w[best.i] / w[best.j];
+    let snap = SAATY[0];
+    for (const s of SAATY) if (Math.abs(Math.log(s) - Math.log(target)) < Math.abs(Math.log(snap) - Math.log(target))) snap = s;
+    const B = A.map(r => r.slice()); B[best.i][best.j] = snap; B[best.j][best.i] = 1 / snap;
+    const crAfter = analysePairwise(B, method).CR;
+    return Object.assign(best, { ideal: target, suggested: snap, crAfter });
+  }
+
+  /** Ratings mode: positive measured values; benefit → x/Σx, cost → (1/x)/Σ(1/x). */
+  function ratingsPriorities(values, type = 'benefit') {
+    const x = values.map(parseValue);
+    if (!x.every(v => isFinite(v) && v > 0)) return null;
+    const t = type === 'cost' ? x.map(v => 1 / v) : x;
+    const s = sum(t);
+    return t.map(v => v / s);
+  }
+
+  /** Overall scores = Σj critW[j] · local[k][j]. local: alternatives × criteria. */
+  function synthesise(critW, local) {
+    const contrib = local.map(row => row.map((p, j) => p * critW[j]));
+    const score = contrib.map(sum);
+    const order = score.map((s, k) => k).sort((a, b) => score[b] - score[a]);
+    const rank = Array(score.length); order.forEach((k, r) => rank[k] = r + 1);
+    return { score, contrib, order, rank };
+  }
+
+  /** Sensitivity: weight of criterion c set to t, others rescaled proportionally. */
+  function sensitivity(critW, local, c, steps = 50) {
+    const rest = 1 - critW[c];
+    const pts = [];
+    for (let s = 0; s <= steps; s++) {
+      const t = s / steps;
+      const w = critW.map((x, j) => j === c ? t : (rest > 1e-12 ? x * (1 - t) / rest : (1 - t) / (critW.length - 1)));
+      pts.push({ t, score: synthesise(w, local).score });
+    }
+    // weight values at which the leader changes
+    const switches = [];
+    for (let s = 1; s < pts.length; s++) {
+      const a = pts[s - 1].score, b = pts[s].score;
+      const la = a.indexOf(Math.max(...a)), lb = b.indexOf(Math.max(...b));
+      if (la !== lb) switches.push({ from: la, to: lb, t: (pts[s - 1].t + pts[s].t) / 2 });
+    }
+    return { pts, switches };
+  }
+
+  root.AHP = { RI, SAATY, parseValue, inRange, toFraction, buildMatrix, matrixValid, weightsNormalisedAverage,
+    weightsGeometricMean, weightsEigenvector, consistency, METHODS, analysePairwise, suggestRevision,
+    ratingsPriorities, synthesise, sensitivity };
+  if (typeof module !== 'undefined') module.exports = root.AHP;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+(function () {
+'use strict';
+const A = window.AHP;
+const STORE_KEY = 'ahp-decision-calculator-v2';
+const MAX_N = 15, SOFT_N = 9;
+const PALETTE = ['--s1', '--s2', '--s3', '--s4', '--s5', '--s6', '--s7', '--s8'].map(v => getComputedStyle(document.documentElement).getPropertyValue(v).trim());
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const f4 = x => (isFinite(x) ? x.toFixed(4) : '–');
+const pct = x => (isFinite(x) ? (x * 100).toFixed(2) + '%' : '–');
+let uid = 0; const newId = p => p + Date.now().toString(36) + (uid++).toString(36);
+const letter = i => String.fromCharCode(65 + i);
+
+/* ======================= state ======================= */
+let S = null, undoSnap = null, R = null;
+const ui = { tab: 't-setup', altCrit: null, sensCrit: null, wiz: { scope: null, i: 0 } };
+const isOn = x => x.on !== false;
+const actC = () => S.criteria.filter(isOn);
+const actA = () => S.alternatives.filter(isOn);
+const newCrit = (name, short, on) => ({ id: newId('c'), name, short, desc: '', on, mode: 'pairwise', ratingType: 'benefit', ratings: {}, pw: {}, evidence: {} });
+const newAlt = (name, on) => ({ id: newId('a'), name, on });
+const autoShort = name => name.trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 4).toUpperCase();
+
+function blankState() {
+  return { version: 2, goal: 'Select the best alternative', method: 'average',
+    criteria: [1, 2, 3].map(k => newCrit('Criterion ' + k, 'C' + k, true)),
+    alternatives: [0, 1, 2].map(k => newAlt('Company ' + letter(k), true)), critPW: {} };
+}
+function exampleState() {
+  const E = {"goal": "Selecting a design consultant for a mixed-use building (example)", "criteria": [["Experience", "Exp", "Years of practice and number of similar projects"], ["Design fee", "Fee", "Design fee – a lower fee is preferred"], ["Design quality", "Qual", "Reputation, awards and quality record"], ["Team capacity", "Cap", "Staff available for this project"], ["Communication", "Com", "Responsiveness and ease of communication"]], "alternatives": ["Studio Alpha", "Beta Architects", "Gamma Design", "Delta Consultants"], "critRaw": [["1", "2", "1", "3", "2"], ["", "1", "1/2", "2", "1"], ["", "", "1", "3", "2"], ["", "", "", "1", "1/2"], ["", "", "", "", "1"]], "altRaw": [[["1", "2", "1/2", "4"], ["", "1", "1/3", "2"], ["", "", "1", "6"], ["", "", "", "1"]], [["1", "1/2", "3", "1/3"], ["", "1", "5", "1/2"], ["", "", "1", "1/7"], ["", "", "", "1"]], [["1", "3", "1/2", "3"], ["", "1", "1/5", "1"], ["", "", "1", "5"], ["", "", "", "1"]], [["1", "2", "1/2", "3"], ["", "1", "1/3", "2"], ["", "", "1", "5"], ["", "", "", "1"]], [["1", "1/2", "3", "1"], ["", "1", "4", "2"], ["", "", "1", "1/3"], ["", "", "", "1"]]], "evidence": [["12 years; 4 similar projects", "8 years; 2 similar projects", "15 years; 6 similar projects", "5 years; 1 similar project"], ["Medium fee", "Low fee", "High fee", "Lowest fee"], ["Good reputation", "Average reputation", "Very good reputation, awards", "Average reputation"], ["60 staff", "40 staff", "120 staff", "25 staff"], ["Easy to communicate", "Very responsive", "Average", "Easy to communicate"]]};
+  const crit = E.criteria.map(x => Object.assign(newCrit(x[0], x[1], true), { desc: x[2] }));
+  const alts = E.alternatives.map(n => newAlt(n, true));
+  const fill = (items, raw) => { const m = {}; raw.forEach((r, i) => r.forEach((v, j) => { if (j > i) m[items[i].id + '|' + items[j].id] = v; })); return m; };
+  const st = { version: 2, goal: E.goal, method: 'average', criteria: crit, alternatives: alts, critPW: fill(crit, E.critRaw) };
+  crit.forEach((c, k) => { c.pw = fill(alts, E.altRaw[k]); alts.forEach((a, i) => c.evidence[a.id] = E.evidence[k][i]); });
+  // supplementary default slots: drafts that do not affect the results until they are evaluated and included
+  st.alternatives.push(newAlt('', false));
+  st.criteria.push(newCrit('', '', false));
+  return st;
+}
+
+/* ======================= editable texts ======================= */
+const VARIANT = 'web';
+const TEXT_KEY = 'ahp-texts-v1';
+let T = {};
+const DEF = {};
+const RICH = new Set(['guide.sub', 'guide.setup', 'guide.wizard.how', 'guide.wizard.scale', 'guide.wizard.tips']);
+const DYN_DEF = {
+  'tab.t-setup': 'Setup', 'tab.t-guide': 'Guided input', 'tab.t-criteria': 'Criteria matrix', 'tab.t-alts': 'Company matrices', 'tab.t-results': 'Results', 'tab.t-sens': 'Sensitivity',
+  'guide.title': '2 · Guided input – one comparison at a time',
+  'guide.sub': 'Choose what to evaluate, then answer each question with the 1–9 scale. Every answer is saved at once and appears in the matrices.',
+  'results.title': '5 · Results',
+  'setup.callout': 'Supplementary option – add your own companies and criteria.'
+};
+function txt(k) { return (T[k] != null && String(T[k]).trim() !== '') ? T[k] : (k in DEF ? DEF[k] : (DYN_DEF[k] || '')); }
+const ALLOWED = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'BR', 'P', 'DIV', 'SPAN', 'OL', 'UL', 'LI', 'H3', 'H4', 'TABLE', 'TBODY', 'THEAD', 'TR', 'TD', 'TH', 'SMALL']);
+function sanitize(html) {
+  const doc = new DOMParser().parseFromString('<div>' + String(html) + '</div>', 'text/html');
+  const walk = node => {
+    [...node.childNodes].forEach(ch => {
+      if (ch.nodeType === 3) return;
+      if (ch.nodeType !== 1 || !ALLOWED.has(ch.tagName)) { if (ch.nodeType === 1) { walk(ch); ch.replaceWith(...ch.childNodes); } else ch.remove(); return; }
+      [...ch.attributes].forEach(a => {
+        const keep = (a.name === 'class' && /^[\w\s-]*$/.test(a.value)) || (a.name === 'style' && !/url\(|expression|javascript:/i.test(a.value));
+        if (!keep) ch.removeAttribute(a.name);
+      });
+      walk(ch);
+    });
+  };
+  const root = doc.body.firstChild; walk(root); return root.innerHTML;
+}
+function tEl(tag, k, attrs = '') {
+  const rich = RICH.has(k);
+  return `<${tag} data-t="${k}" ${rich ? 'data-t-rich' : ''} ${attrs}>${rich ? sanitize(txt(k)) : esc(txt(k))}</${tag}>`;
+}
+function captureDefaults() { document.querySelectorAll('[data-t]').forEach(el => { if (!(el.dataset.t in DEF)) DEF[el.dataset.t] = el.hasAttribute('data-t-rich') ? el.innerHTML.trim() : el.textContent; }); }
+function applyStaticTexts() {
+  document.querySelectorAll('[data-t]').forEach(el => {
+    if (document.activeElement === el) return;
+    const v = txt(el.dataset.t);
+    if (el.hasAttribute('data-t-rich')) el.innerHTML = sanitize(v); else el.textContent = v;
+  });
+  document.title = txt('app.title');
+  applyEditable();
+}
+function applyEditable() {
+  const on = document.body.classList.contains('editing');
+  document.querySelectorAll('[data-t]').forEach(el => {
+    if (on) {
+      if (el.getAttribute('contenteditable')) return;
+      if (el.hasAttribute('data-t-rich')) el.setAttribute('contenteditable', 'true');
+      else { el.setAttribute('contenteditable', 'plaintext-only'); if (el.contentEditable !== 'plaintext-only') el.setAttribute('contenteditable', 'true'); }
+      el.spellcheck = false;
+    } else el.removeAttribute('contenteditable');
+  });
+}
+function loadTexts() { try { const t = JSON.parse(localStorage.getItem(TEXT_KEY) || '{}'); return t && typeof t === 'object' ? t : {}; } catch (e) { return {}; } }
+function cleanTexts(t) { const o = {}; if (t && typeof t === 'object') for (const [k, v] of Object.entries(t)) if (typeof v === 'string' && /^[\w.-]+$/.test(k)) o[k] = RICH.has(k) ? sanitize(v) : v.slice(0, 500); return o; }
+
+/* ======================= pair storage ======================= */
+function getPair(map, a, b) {
+  if (map[a + '|' + b] != null) return { raw: map[a + '|' + b], inv: false };
+  if (map[b + '|' + a] != null) return { raw: map[b + '|' + a], inv: true };
+  return null;
+}
+function pairValue(map, a, b) { const p = getPair(map, a, b); if (!p) return NaN; const v = A.parseValue(p.raw); return p.inv ? 1 / v : v; }
+function pairText(map, a, b) {
+  const p = getPair(map, a, b); if (!p) return '';
+  if (!p.inv) return p.raw;
+  const v = A.parseValue(p.raw); return isFinite(v) ? A.toFraction(1 / v) : p.raw;
+}
+function setPair(map, a, b, text) {
+  delete map[b + '|' + a];
+  const t = String(text).trim();
+  if (t === '') delete map[a + '|' + b]; else map[a + '|' + b] = t;
+}
+function prune() {
+  const cid = new Set(S.criteria.map(c => c.id)), aid = new Set(S.alternatives.map(a => a.id));
+  const clean = (map, ids) => { for (const k of Object.keys(map)) { const [x, y] = k.split('|'); if (!ids.has(x) || !ids.has(y)) delete map[k]; } };
+  clean(S.critPW, cid);
+  S.criteria.forEach(c => {
+    clean(c.pw, aid);
+    for (const k of Object.keys(c.ratings)) if (!aid.has(k)) delete c.ratings[k];
+    for (const k of Object.keys(c.evidence)) if (!aid.has(k)) delete c.evidence[k];
+  });
+}
+
+/* ======================= labels ======================= */
+const critCode = c => 'C' + (S.criteria.indexOf(c) + 1);
+const altCode = a => letter(S.alternatives.indexOf(a));
+const critName = c => c.name || 'New criterion (unnamed)';
+const altName = a => a.name || 'New company (unnamed)';
+const critLabel = c => `${critCode(c)} ${c.short || c.name || 'new'}`;
+const altLabel = a => `${altCode(a)} – ${a.name || 'new company'}`;
+
+/* ======================= analysis ======================= */
+function matrixFrom(items, map) {
+  const n = items.length, M = Array.from({ length: n }, () => Array(n).fill(1));
+  let missing = 0, invalid = 0; const cell = {};
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+    const p = getPair(map, items[i].id, items[j].id);
+    let v = NaN, st = 'ok';
+    if (!p || String(p.raw).trim() === '') { st = 'empty'; missing++; }
+    else { v = pairValue(map, items[i].id, items[j].id); if (!A.inRange(v)) { st = 'err'; invalid++; } }
+    M[i][j] = v; M[j][i] = 1 / v; cell[i + ',' + j] = st;
+  }
+  return { M, missing, invalid, cell, complete: n > 0 && missing === 0 && invalid === 0 };
+}
+function analyseMatrix(items, map) {
+  const m = matrixFrom(items, map);
+  if (!m.complete) return Object.assign(m, { ready: false, n: items.length });
+  const r = A.analysePairwise(m.M, S.method);
+  const sug = (!r.ok && items.length > 2) ? A.suggestRevision(m.M, S.method) : null;
+  return Object.assign(m, r, { ready: true, suggestion: sug, n: items.length });
+}
+function analyseCriterion(c, alts) {
+  if (c.mode === 'rating') {
+    const vals = alts.map(a => c.ratings[a.id]);
+    const empty = v => v == null || String(v).trim() === '';
+    const missing = vals.filter(empty).length;
+    const invalid = vals.filter(v => !empty(v) && !(A.parseValue(v) > 0)).length;
+    const w = (missing || invalid) ? null : A.ratingsPriorities(vals, c.ratingType);
+    return { mode: 'rating', ready: !!w, w, missing, invalid, ok: true, n: alts.length };
+  }
+  return Object.assign({ mode: 'pairwise' }, analyseMatrix(alts, c.pw));
+}
+function analyseAll() {
+  const crits = actC(), alts = actA();
+  const blocked = crits.length < 1 ? 'Include at least one criterion.' : alts.length < 2 ? 'Include at least two companies.' : null;
+  const crit = analyseMatrix(crits, S.critPW);
+  const per = crits.map(c => analyseCriterion(c, alts));
+  const ready = !blocked && crit.ready && per.every(p => p.ready);
+  let syn = null, byMethod = null;
+  if (ready) {
+    const local = alts.map((_, k) => per.map(p => p.w[k]));
+    syn = A.synthesise(crit.w, local); syn.local = local; syn.critW = crit.w;
+    byMethod = {};
+    for (const m of Object.keys(A.METHODS)) {
+      const cw = A.METHODS[m].fn(crit.M);
+      const loc = alts.map((_, k) => crits.map((c, j) => per[j].mode === 'rating' ? per[j].w[k] : A.METHODS[m].fn(per[j].M)[k]));
+      byMethod[m] = A.synthesise(cw, loc);
+    }
+  }
+  const allOk = crit.ready && crit.ok && per.every(p => !p.ready || p.ok);
+  return { crits, alts, blocked, crit, per, ready, syn, byMethod, allOk };
+}
+
+/* ======================= persistence ======================= */
+let saveTimer = null;
+let cloud = null; // attached by the optional Firebase module
+function persistNow() {
+  clearTimeout(saveTimer); saveTimer = null;
+  if (cloud && cloud.active) { cloud.save({ project: S, texts: T }, true); return; }
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); localStorage.setItem(TEXT_KEY, JSON.stringify(T)); } catch (e) { }
+}
+function persist() { clearTimeout(saveTimer); saveTimer = setTimeout(persistNow, 250); }
+window.addEventListener('pagehide', () => { if (saveTimer) persistNow(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && saveTimer) persistNow(); });
+function loadStored() { try { const t = localStorage.getItem(STORE_KEY); if (t) { const o = JSON.parse(t); if (validState(o)) return o; } } catch (e) { } return null; }
+function validState(o) {
+  return o && Array.isArray(o.criteria) && Array.isArray(o.alternatives) && o.criteria.length >= 1 && o.alternatives.length >= 1 &&
+    o.criteria.every(c => c.id && typeof c.name === 'string') && o.alternatives.every(a => a.id && typeof a.name === 'string');
+}
+function normalise(o) {
+  o.version = 2; o.method = A.METHODS[o.method] ? o.method : 'average'; o.goal = o.goal || ''; o.critPW = o.critPW || {};
+  o.criteria.forEach(c => { c.short = c.short == null ? c.name.slice(0, 6) : c.short; c.desc = c.desc || ''; c.on = c.on !== false; c.mode = c.mode === 'rating' ? 'rating' : 'pairwise'; c.ratingType = c.ratingType === 'cost' ? 'cost' : 'benefit'; c.ratings = c.ratings || {}; c.pw = c.pw || {}; c.evidence = c.evidence || {}; });
+  o.alternatives.forEach(a => { a.on = a.on !== false; });
+  return o;
+}
+function download(name, text, type) {
+  const blob = new Blob([text], { type }); const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 500);
+}
+function toast(msg, action) {
+  const t = $('#toast'); t.innerHTML = esc(msg) + (action ? ` <button class="btn small" style="margin-left:8px;pointer-events:auto;color:#1b1b19" id="toastAct">${esc(action.label)}</button>` : '');
+  t.style.pointerEvents = action ? 'auto' : 'none'; t.classList.add('show');
+  if (action) $('#toastAct').onclick = () => { action.fn(); t.classList.remove('show'); };
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), action ? 6000 : 2400);
+}
+function snapshot() { undoSnap = JSON.stringify(S); }
+function undo() { if (undoSnap) { S = JSON.parse(undoSnap); undoSnap = null; changed(true); if (ui.tab === 't-guide') renderWizard(); toast('Restored'); } }
+
+/* ======================= small helpers ======================= */
+function crBadge(r) {
+  if (!r || !r.ready) return '<span class="badge warn">incomplete</span>';
+  if (r.mode === 'rating') return '<span class="badge neutral">direct rating</span>';
+  if (r.n <= 2) return '<span class="badge ok">CR n/a (n ≤ 2)</span>';
+  return r.ok ? `<span class="badge ok">CR ${f4(r.CR)} ≤ 0.10</span>` : `<span class="badge bad">CR ${f4(r.CR)} &gt; 0.10</span>`;
+}
+const statusDot = r => (!r || !r.ready ? 'warn' : (r.ok === false ? 'bad' : 'ok'));
+function incompleteNote(r) { const p = []; if (r.missing) p.push(`${r.missing} judgment(s) missing`); if (r.invalid) p.push(`${r.invalid} invalid value(s)`); return p.join(' · ') || 'Matrix empty'; }
+
+/* ======================= tabs ======================= */
+const TABS = [['t-setup', 'Setup'], ['t-guide', 'Guided input'], ['t-criteria', 'Criteria matrix'], ['t-alts', 'Company matrices'], ['t-results', 'Results'], ['t-sens', 'Sensitivity']];
+function renderTabs() {
+  const st = {
+    't-criteria': statusDot(R.crit),
+    't-alts': R.per.some(p => !p.ready) ? 'warn' : (R.per.some(p => p.ok === false) ? 'bad' : 'ok'),
+    't-results': R.ready ? (R.allOk ? 'ok' : 'bad') : 'warn'
+  };
+  const nav = $('#tabs');
+  if (!nav.children.length) { nav.innerHTML = TABS.map(([id], k) => `<button data-tab="${id}"><span class="num">${k + 1}</span>${tEl('span', 'tab.' + id)} <span class="dot"></span></button>`).join(''); applyEditable(); }
+  [...nav.children].forEach(btn => {
+    const id = btn.dataset.tab; btn.classList.toggle('active', ui.tab === id);
+    const d = btn.querySelector('.dot'); d.className = 'dot ' + (st[id] || ''); d.style.display = st[id] ? '' : 'none';
+  });
+  document.querySelectorAll('section.tab').forEach(s => s.classList.toggle('active', s.id === ui.tab));
+}
+function goTab(id) { ui.tab = id; renderTabs(); if (id === 't-guide') renderWizard(); window.scrollTo(0, 0); }
+
+/* ======================= setup tab ======================= */
+DYN_DEF['guide.setup'] = `<h3>ⓘ How to add a company or a criterion</h3>
+  <ol>
+   <li><b>Type a name</b> in a blank row. Two blank rows (one company, one criterion) are ready by default; use <b>+ Add</b> for more.</li>
+   <li>New items start as <b>drafts</b> (<i>Use</i> unticked): they are saved, but the results do not change yet.</li>
+   <li>Press <b>Evaluate</b>. The <i>Guided input</i> tab asks every comparison the new item needs, one question at a time, with the 1–9 scale.</li>
+   <li>When all questions are answered and the CR badge is green, press <b>Include in the analysis</b> (or tick <i>Use</i>).</li>
+  </ol>
+  <h4>A good criterion…</h4>
+  <ul><li>measures one thing only – no overlap with another criterion (e.g. not both “staff” and “capacity”);</li>
+   <li>can be judged for every company;</li><li>really matters for this decision.</li></ul>
+  <h4>Pairwise or direct rating?</h4>
+  <p><b>Pairwise</b> – for qualitative criteria (reputation, creativity, communication). <b>Direct rating</b> – when every company has a measured value (years, staff, fee in VND): higher-is-better = <i>benefit</i>, lower-is-better = <i>cost</i>.</p>
+  <h4>Size</h4><p>Keep each matrix to <b>9 items or fewer</b> (Saaty). A new criterion adds one question per existing criterion plus the company comparisons under it; a new company adds one question per other company for each pairwise criterion.</p>
+  <div class="ex"><b>Example:</b> type “BIM capability” (short: BIM) in the blank criterion row, or a company name in the blank company row, then press <b>Evaluate</b>.</div>`;
+function itemStatus(kind, it) {
+  const qs = questionsFor(kind + ':' + it.id); const done = qs.filter(answered).length;
+  if (isOn(it)) return done === qs.length ? '<span class="badge ok">In analysis</span>' : `<span class="badge warn">In analysis · ${qs.length - done} open</span>`;
+  if (!it.name.trim()) return '<span class="badge neutral">Blank – type a name</span>';
+  return done === qs.length ? '<span class="badge ok">Draft · ready to include</span>' : `<span class="badge neutral">Draft · ${done}/${qs.length} answered</span>`;
+}
+function renderSetup() {
+  $('#goal').value = S.goal;
+  const nc = actC().length, na = actA().length;
+  $('#nCrit').textContent = `${nc} in use · ${S.criteria.length - nc} draft`;
+  $('#nAlt').textContent = `${na} in use · ${S.alternatives.length - na} draft`;
+  $('#critList').innerHTML = `<div class="ihead"><span>Code</span><span>Use</span><span>Criterion name</span><span>Short label</span><span>Companies judged by</span><span>Status</span><span></span></div>` +
+    S.criteria.map((c, i) => `<div class="irow ${isOn(c) ? '' : 'draft'}" data-id="${c.id}">
+      <span class="code">${critCode(c)}</span>
+      <input type="checkbox" class="chk" data-use ${isOn(c) ? 'checked' : ''} title="Use this criterion in the calculation" aria-label="Use ${esc(c.name)}">
+      <input type="text" data-f="name" value="${esc(c.name)}" placeholder="Type a new criterion, e.g. BIM capability" aria-label="Criterion name">
+      <input type="text" data-f="short" value="${esc(c.short)}" placeholder="Short" aria-label="Short label">
+      <select data-f="mode" aria-label="Input mode"><option value="pairwise" ${c.mode === 'pairwise' ? 'selected' : ''}>Pairwise</option><option value="rating" ${c.mode === 'rating' ? 'selected' : ''}>Direct rating</option></select>
+      <span>${itemStatus('crit', c)}</span>
+      <span class="acts"><button class="btn small" data-eval="crit:${c.id}">Evaluate</button><button class="btn small ghost" data-mv="-1" title="Move up" ${i === 0 ? 'disabled' : ''}>↑</button><button class="btn small ghost" data-mv="1" title="Move down" ${i === S.criteria.length - 1 ? 'disabled' : ''}>↓</button><button class="btn small ghost danger" data-del title="Delete">✕</button></span></div>`).join('');
+  $('#altList').innerHTML = `<div class="ihead"><span>Code</span><span>Use</span><span>Company name</span><span>Status</span><span></span></div>` +
+    S.alternatives.map((a, i) => `<div class="irow ${isOn(a) ? '' : 'draft'}" data-id="${a.id}">
+      <span class="code">${altCode(a)}</span>
+      <input type="checkbox" class="chk" data-use ${isOn(a) ? 'checked' : ''} title="Use this company in the calculation" aria-label="Use ${esc(a.name)}">
+      <input type="text" data-f="name" value="${esc(a.name)}" placeholder="Type a new company name" aria-label="Company name">
+      <span>${itemStatus('alt', a)}</span>
+      <span class="acts"><button class="btn small" data-eval="alt:${a.id}">Evaluate</button><button class="btn small ghost" data-mv="-1" title="Move up" ${i === 0 ? 'disabled' : ''}>↑</button><button class="btn small ghost" data-mv="1" title="Move down" ${i === S.alternatives.length - 1 ? 'disabled' : ''}>↓</button><button class="btn small ghost danger" data-del title="Delete">✕</button></span></div>`).join('');
+  $('#addCrit').disabled = S.criteria.length >= MAX_N; $('#addAlt').disabled = S.alternatives.length >= MAX_N;
+  const drafts = [...S.criteria.filter(c => !isOn(c)).map(c => `${critCode(c)} ${c.name ? '“' + esc(c.name) + '”' : '(blank)'}`), ...S.alternatives.filter(a => !isOn(a)).map(a => `${altCode(a)} ${a.name ? '“' + esc(a.name) + '”' : '(blank)'}`)];
+  $('#setupCallout').innerHTML = `<span class="ic">➕</span><div>${tEl('b', 'setup.callout')}<br>
+    <span class="sub" style="margin:0">${drafts.length ? `Draft slots ready: ${drafts.join(', ')}. Type a name, press <b>Evaluate</b> and answer the guided questions, then include it in the analysis.` : 'Use “+ Add a new company” or “+ Add a new criterion”; new items start as drafts until you evaluate and include them.'}</span></div>`;
+  const big = [];
+  if (nc > SOFT_N) big.push(`${nc} criteria`);
+  if (na > SOFT_N) big.push(`${na} companies`);
+  const nPw = nc * (nc - 1) / 2 + actC().filter(c => c.mode === 'pairwise').length * na * (na - 1) / 2;
+  $('#sizeNote').innerHTML = (big.length ? `<div class="note">You use ${big.join(' and ')}. Saaty recommends no more than 9 elements per matrix; consider grouping criteria, or direct ratings for the companies.</div>` : '') +
+    `<div class="note info">Pairwise judgments required for the items in use: <b>${nPw}</b> (n(n−1)/2 per matrix). Maximum: ${MAX_N} items per list.</div>`;
+  $('#guideSetup').innerHTML = tEl('div', 'guide.setup'); applyEditable();
+}
+function onListEvent(e, kind) {
+  const row = e.target.closest('.irow'); if (!row) return;
+  const arr = kind === 'c' ? S.criteria : S.alternatives;
+  const idx = arr.findIndex(x => x.id === row.dataset.id), it = arr[idx];
+  const t = e.target, minOn = kind === 'c' ? 1 : 2;
+  if (e.type === 'input' && t.dataset.f && t.tagName === 'INPUT') { it[t.dataset.f] = t.value; t.classList.remove('need'); changed(false); return; }
+  if (e.type === 'change' && t.dataset.f === 'mode') { it.mode = t.value; changed(true); return; }
+  if (e.type === 'change' && t.hasAttribute('data-use')) {
+    if (t.checked && !it.name.trim()) { t.checked = false; const inp = row.querySelector('[data-f="name"]'); inp.classList.add('need'); inp.focus(); toast('Type a name first'); return; }
+    if (!t.checked && arr.filter(isOn).length <= minOn) { t.checked = true; toast(kind === 'c' ? 'At least one criterion must stay in use' : 'At least two companies must stay in use'); return; }
+    if (kind === 'c' && t.checked && !it.short.trim()) it.short = autoShort(it.name);
+    it.on = t.checked; changed(true); toast(t.checked ? `“${it.name}” is now used in the analysis` : `“${it.name}” moved to drafts`); return;
+  }
+  const btn = t.closest('button'); if (!btn || e.type !== 'click') return;
+  if (btn.dataset.mv) { const j = idx + +btn.dataset.mv; [arr[idx], arr[j]] = [arr[j], arr[idx]]; changed(true); }
+  else if (btn.hasAttribute('data-del')) {
+    if (isOn(it) && arr.filter(isOn).length <= minOn) { toast(kind === 'c' ? 'At least one criterion must stay in use' : 'At least two companies must stay in use'); return; }
+    snapshot(); arr.splice(idx, 1); prune(); changed(true);
+    toast(`Deleted “${it.name || 'blank item'}”`, { label: 'Undo', fn: undo });
+  }
+}
+
+/* ======================= guided input ======================= */
+const SCALE = [9, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+const VERBAL = { 1: 'Equal', 2: 'Equal to moderately', 3: 'Moderately', 4: 'Moderately to strongly', 5: 'Strongly', 6: 'Strongly to very strongly', 7: 'Very strongly', 8: 'Very strongly to extremely', 9: 'Extremely' };
+const SHORTLAB = { 1: 'Equal', 3: 'Moderate', 5: 'Strong', 7: 'Very strong', 9: 'Extreme' };
+
+function questionsFor(scope) {
+  if (!scope) return [];
+  const crits = actC(), alts = actA(), qs = [];
+  const pairQ = (map, x, y, ctx) => qs.push({ t: 'pair', map, x, y, ctx });
+  const altMatrixQ = (c, list) => {
+    if (c.mode === 'rating') list.forEach(a => qs.push({ t: 'rate', c, a }));
+    else for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) pairQ(c.pw, list[i], list[j], c);
+  };
+  const [kind, id] = scope.split(':');
+  if (kind === 'alt') {
+    const it = S.alternatives.find(a => a.id === id); if (!it) return [];
+    const others = alts.filter(a => a.id !== id);
+    crits.forEach(c => { if (c.mode === 'rating') qs.push({ t: 'rate', c, a: it }); else others.forEach(o => pairQ(c.pw, it, o, c)); });
+  } else if (kind === 'crit') {
+    const it = S.criteria.find(c => c.id === id); if (!it) return [];
+    crits.filter(c => c.id !== id).forEach(o => pairQ(S.critPW, it, o, null));
+    altMatrixQ(it, alts);
+  } else if (kind === 'critmatrix') {
+    for (let i = 0; i < crits.length; i++) for (let j = i + 1; j < crits.length; j++) pairQ(S.critPW, crits[i], crits[j], null);
+  } else if (kind === 'altmatrix') {
+    const c = S.criteria.find(x => x.id === id); if (c) altMatrixQ(c, alts);
+  } else if (kind === 'missing') {
+    for (let i = 0; i < crits.length; i++) for (let j = i + 1; j < crits.length; j++) if (!A.inRange(pairValue(S.critPW, crits[i].id, crits[j].id))) pairQ(S.critPW, crits[i], crits[j], null);
+    crits.forEach(c => {
+      if (c.mode === 'rating') alts.forEach(a => { if (!(A.parseValue(c.ratings[a.id]) > 0)) qs.push({ t: 'rate', c, a }); });
+      else for (let i = 0; i < alts.length; i++) for (let j = i + 1; j < alts.length; j++) if (!A.inRange(pairValue(c.pw, alts[i].id, alts[j].id))) pairQ(c.pw, alts[i], alts[j], c);
+    });
+  }
+  return qs;
+}
+function answered(q) { return q.t === 'rate' ? A.parseValue(q.c.ratings[q.a.id]) > 0 : A.inRange(pairValue(q.map, q.x.id, q.y.id)); }
+function scopeOptions() {
+  const o = [];
+  S.alternatives.filter(a => !isOn(a)).forEach(a => o.push([`alt:${a.id}`, `New / draft company: ${altLabel(a)}`]));
+  S.criteria.filter(c => !isOn(c)).forEach(c => o.push([`crit:${c.id}`, `New / draft criterion: ${critCode(c)} ${c.name || '(blank)'}`]));
+  o.push(['missing', `All missing judgments of the items in use (${questionsFor('missing').length})`]);
+  o.push(['critmatrix', 'Criteria – compare every pair of criteria']);
+  actC().forEach(c => o.push([`altmatrix:${c.id}`, `Companies under ${critLabel(c)}`]));
+  actA().forEach(a => o.push([`alt:${a.id}`, `Review one company: ${altLabel(a)}`]));
+  actC().forEach(c => o.push([`crit:${c.id}`, `Review one criterion: ${critLabel(c)}`]));
+  return o;
+}
+function defaultScope() {
+  const d = S.alternatives.find(a => !isOn(a) && a.name.trim()) || S.criteria.find(c => !isOn(c) && c.name.trim());
+  if (d) return (S.alternatives.includes(d) ? 'alt:' : 'crit:') + d.id;
+  const blank = S.alternatives.find(a => !isOn(a)) || S.criteria.find(c => !isOn(c));
+  if (blank) return (S.alternatives.includes(blank) ? 'alt:' : 'crit:') + blank.id;
+  return questionsFor('missing').length ? 'missing' : 'critmatrix';
+}
+function openWizard(scope) {
+  ui.wiz.scope = scope; const qs = questionsFor(scope);
+  const first = qs.findIndex(q => !answered(q)); ui.wiz.i = first < 0 ? 0 : first;
+  goTab('t-guide');
+}
+function scopeItem(scope) {
+  const [k, id] = (scope || '').split(':');
+  if (k === 'alt') { const it = S.alternatives.find(a => a.id === id); return it ? { kind: 'alt', it } : null; }
+  if (k === 'crit') { const it = S.criteria.find(c => c.id === id); return it ? { kind: 'crit', it } : null; }
+  return null;
+}
+function matrixCheck(q) { // consistency of the matrix this question belongs to, as if the scoped item were included
+  if (q.t !== 'pair') return '';
+  const isCrit = q.map === S.critPW;
+  const base = isCrit ? actC() : actA(), full = isCrit ? S.criteria : S.alternatives;
+  const set = new Set(base.map(x => x.id)); set.add(q.x.id); set.add(q.y.id);
+  const items = full.filter(x => set.has(x.id));
+  const r = analyseMatrix(items, q.map), lab = isCrit ? critLabel : altLabel;
+  const title = isCrit ? 'Criteria matrix' : `Matrix “${critName(q.ctx)}”`;
+  if (!r.ready) return `<span class="badge neutral">${esc(title)}: ${r.missing} answer(s) still open – CR shown when complete</span>`;
+  if (items.length <= 2) return `<span class="badge ok">${esc(title)}: complete</span>`;
+  return r.ok ? `<span class="badge ok">${esc(title)}: CR ${f4(r.CR)} ≤ 0.10 ✓ consistent</span>` :
+    `<span class="badge bad">${esc(title)}: CR ${f4(r.CR)} &gt; 0.10</span><div class="note bad" style="margin-top:6px">The answers are not consistent enough. The most inconsistent pair is <b>${esc(lab(items[r.suggestion.i]))}</b> vs <b>${esc(lab(items[r.suggestion.j]))}</b> (now ${esc(A.toFraction(r.suggestion.current))}); a value of <b>${esc(A.toFraction(r.suggestion.suggested))}</b> would give CR = ${f4(r.suggestion.crAfter)}.</div>`;
+}
+function renderWizard() {
+  if (!ui.wiz.scope || !scopeOptions().some(o => o[0] === ui.wiz.scope)) { ui.wiz.scope = defaultScope(); ui.wiz.i = Math.max(0, questionsFor(ui.wiz.scope).findIndex(q => !answered(q))); }
+  const qs = questionsFor(ui.wiz.scope), n = qs.length, done = qs.filter(answered).length;
+  if (ui.wiz.i >= n) ui.wiz.i = Math.max(0, n - 1);
+  const si = scopeItem(ui.wiz.scope);
+  let h = `${tEl('h2', 'guide.title')}${tEl('p', 'guide.sub', 'class="sub"')}
+    <div class="wz-top"><label>Evaluate <select class="sel" id="wzScope" style="max-width:100%">${scopeOptions().map(([v, l]) => `<option value="${v}" ${v === ui.wiz.scope ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label></div>`;
+  if (si) {
+    const it = si.it, isC = si.kind === 'crit';
+    h += `<div class="note info" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><b>${isC ? critCode(it) : altCode(it)}</b>
+      <input type="text" id="wzName" value="${esc(it.name)}" placeholder="${isC ? 'Type the criterion name, e.g. BIM capability' : 'Type the company name'}" style="flex:1;min-width:200px;border:1px solid var(--line-2);border-radius:7px;padding:5px 8px">
+      ${isC ? `<input type="text" id="wzShort" value="${esc(it.short)}" placeholder="Short" style="width:90px;border:1px solid var(--line-2);border-radius:7px;padding:5px 8px">
+      <select class="sel" id="wzMode"><option value="pairwise" ${it.mode === 'pairwise' ? 'selected' : ''}>Companies compared pairwise</option><option value="rating" ${it.mode === 'rating' ? 'selected' : ''}>Companies rated with values</option></select>` : ''}
+      ${isOn(it) ? '<span class="badge ok">In analysis</span>' : '<span class="badge neutral">Draft – not in results yet</span>'}</div>`;
+    if (!it.name.trim()) {
+      h += `<div class="note">Type a name for this ${isC ? 'criterion' : 'company'} above and press Tab – the questions will then appear and refer to it by name.</div>`;
+      $('#wizard').innerHTML = h; $('#guideWizard').innerHTML = guideWizard(null); applyEditable(); return;
+    }
+  }
+  if (!n) {
+    h += `<div class="note ok">Nothing to answer here – every judgment in this set is complete.</div>${finishBlock(si)}`;
+    $('#wizard').innerHTML = h; $('#guideWizard').innerHTML = guideWizard(null); applyEditable(); return;
+  }
+  const q = qs[ui.wiz.i];
+  h += `<div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--text-2)"><span>Question <b>${ui.wiz.i + 1}</b> of ${n}</span><span>${done} of ${n} answered</span></div>
+    <div class="progress"><i style="width:${(done / n * 100).toFixed(1)}%"></i></div>`;
+  if (q.t === 'pair') {
+    const isCrit = q.map === S.critPW;
+    const nm = x => isCrit ? critName(x) : altName(x), code = x => isCrit ? critCode(x) : altCode(x);
+    const text = isCrit ? `For the goal <i>“${esc(S.goal)}”</i>, which criterion is <b>more important</b> – and how much?`
+      : `With respect to <b>${esc(critCode(q.ctx))} ${esc(critName(q.ctx))}</b>, which company is <b>better</b> – and how much?${q.ctx.desc ? `<div class="sub" style="margin:4px 0 0">${esc(critName(q.ctx))}: ${esc(q.ctx.desc)}</div>` : ''}`;
+    const info = x => isCrit ? `<textarea data-desc="${x.id}" placeholder="What does this criterion measure? (optional)">${esc(x.desc || '')}</textarea>`
+      : `<textarea data-ev="${q.ctx.id}|${x.id}" placeholder="Evidence for this criterion, e.g. years, projects, fee (optional)">${esc(q.ctx.evidence[x.id] || '')}</textarea>`;
+    const v = pairValue(q.map, q.x.id, q.y.id);
+    let selIdx = -1, custom = '';
+    if (A.inRange(v)) {
+      if (Math.abs(v - 1) < 1e-9) selIdx = 8;
+      else if (v > 1) { const r = Math.min(9, Math.max(1, Math.round(v))); selIdx = 8 - (r - 1); if (Math.abs(v - r) > 1e-9) custom = A.toFraction(v); }
+      else { const r = Math.min(9, Math.max(1, Math.round(1 / v))); selIdx = 8 + (r - 1); if (Math.abs(1 / v - r) > 1e-9) custom = A.toFraction(v); }
+    }
+    h += `<div class="qtext">${text}</div>
+      <div class="vs"><div class="side l"><small class="code">${esc(code(q.x))}</small><br><b>${esc(nm(q.x))}</b>${info(q.x)}</div><div class="mid">vs</div>
+      <div class="side r"><small class="code">${esc(code(q.y))}</small><br><b>${esc(nm(q.y))}</b>${info(q.y)}</div></div>
+      <div class="scale-sides"><span class="a">◀ ${esc(nm(q.x))} ${isCrit ? 'more important' : 'better'}</span><span class="b">${esc(nm(q.y))} ${isCrit ? 'more important' : 'better'} ▶</span></div>
+      <div class="scale" role="group" aria-label="Saaty scale">${SCALE.map((s, k) => `<button data-sc="${k}" class="${k < 8 ? 'L' : k > 8 ? 'R' : 'E'} ${k === selIdx ? 'sel' : ''}" title="${k === 8 ? 'Equal' : esc(VERBAL[s]) + ' – ' + esc(k < 8 ? nm(q.x) : nm(q.y))}">${s}</button>`).join('')}</div>
+      <div class="scale-lab">${SCALE.map(s => `<span>${SHORTLAB[s] || ''}</span>`).join('')}</div>
+      <div class="answer" id="wzAnswer">${selIdx < 0 ? '<span class="sub">Not answered yet – click a value on the scale.</span>' : answerText(q, selIdx, custom)}</div>
+      <div style="margin-top:6px">${matrixCheck(q)}</div>`;
+  } else {
+    const c = q.c, val = c.ratings[q.a.id] == null ? '' : c.ratings[q.a.id];
+    h += `<div class="qtext">Enter the measured value of <b>${esc(altCode(q.a))} – ${esc(altName(q.a))}</b> for <b>${esc(critCode(c))} ${esc(critName(c))}</b>.</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><input id="wzRate" value="${esc(val)}" style="width:160px;border:1px solid var(--line-2);border-radius:7px;padding:7px 9px;background:var(--input)" placeholder="e.g. 15" inputmode="decimal">
+      <label>Direction <select class="sel" id="wzRtype"><option value="benefit" ${c.ratingType === 'benefit' ? 'selected' : ''}>Benefit – higher is better</option><option value="cost" ${c.ratingType === 'cost' ? 'selected' : ''}>Cost – lower is better</option></select></label></div>
+      <textarea data-ev="${c.id}|${q.a.id}" placeholder="Evidence / source (optional)" style="width:100%;margin-top:8px;border:1px dashed var(--line-2);border-radius:6px;padding:5px 7px;font-size:12.5px;min-height:40px">${esc(c.evidence[q.a.id] || '')}</textarea>
+      <p class="sub" style="margin-top:6px">Use a positive number on a ratio scale (twice the value means twice as much). Priorities: benefit wᵢ = xᵢ/Σx; cost wᵢ = (1/xᵢ)/Σ(1/x). Press Enter for the next question.</p>`;
+  }
+  h += `<div class="wz-nav"><button class="btn" data-wznav="-1" ${ui.wiz.i === 0 ? 'disabled' : ''}>◀ Previous</button><button class="btn" data-wznav="1" ${ui.wiz.i >= n - 1 ? 'disabled' : ''}>Next ▶</button>
+    <button class="btn" data-wznext="open" ${done === n ? 'disabled' : ''}>Next unanswered</button>${q.t === 'pair' ? '<button class="btn ghost" data-wzclear>Clear answer</button>' : ''}</div>
+    <div class="qlist" aria-label="Questions">${qs.map((qq, k) => `<button data-wzgo="${k}" class="${answered(qq) ? 'done' : ''} ${k === ui.wiz.i ? 'cur' : ''}" title="Question ${k + 1}">${k + 1}</button>`).join('')}</div>`;
+  if (done === n) h += finishBlock(si);
+  $('#wizard').innerHTML = h;
+  $('#guideWizard').innerHTML = guideWizard(q); applyEditable();
+}
+function answerText(q, k, custom) {
+  const isCrit = q.map === S.critPW, nm = x => isCrit ? critName(x) : altName(x);
+  if (k === 8) return `Your answer: <b>equal</b> (1) – ${esc(nm(q.x))} and ${esc(nm(q.y))} are judged the same.`;
+  const s = SCALE[k], win = k < 8 ? q.x : q.y, lose = k < 8 ? q.y : q.x;
+  return `Your answer: <b>${esc(nm(win))}</b> is <b>${esc(VERBAL[s].toLowerCase())}</b> ${isCrit ? 'more important than' : 'better than'} ${esc(nm(lose))} → stored as <b>${k < 8 ? s : '1/' + s}</b>${custom ? ` <span class="sub">(the current value ${esc(custom)} is not on the 1–9 grid; clicking a button replaces it)</span>` : ''}.`;
+}
+function finishBlock(si) {
+  if (si && !isOn(si.it)) {
+    return `<div class="note ok" style="margin-top:14px"><b>All questions for ${esc(si.kind === 'crit' ? critCode(si.it) + ' ' + critName(si.it) : altLabel(si.it))} are answered.</b> Include it in the calculation to see its effect on the ranking.</div>
+      <div class="wz-nav"><button class="btn primary" data-include="${si.kind}:${si.it.id}">Include in the analysis</button><button class="btn" data-gotab="t-results">View results</button></div>`;
+  }
+  return `<div class="note ok" style="margin-top:14px"><b>All questions in this set are answered.</b></div><div class="wz-nav"><button class="btn primary" data-gotab="t-results">View results</button></div>`;
+}
+function guideWizard(q) {
+  let ex = '';
+  if (q && q.t === 'pair' && q.map !== S.critPW) ex = `<div class="ex"><b>Think only about “${esc(critName(q.ctx))}”.</b> Ignore price, size or any other criterion in this question – they are asked separately.</div>`;
+  else if (q && q.t === 'pair') ex = `<div class="ex"><b>Ask yourself:</b> “For this decision, if I could be sure of only one of the two, which matters more – and how much more?”</div>`;
+  else if (q) ex = `<div class="ex"><b>Direct rating:</b> type the real measured value; the app converts the values into priorities automatically.</div>`;
+  return tEl('div', 'guide.wizard.how') + ex + tEl('div', 'guide.wizard.scale') + tEl('div', 'guide.wizard.tips');
+}
+DYN_DEF['guide.wizard.how'] = `<h3>ⓘ How to answer</h3>
+    <ol><li>Read the two items; the boxes show their evidence or description (you can edit it).</li>
+      <li>Decide <b>which side wins</b>: a button on the <span style="color:#2a78d6;font-weight:600">left</span> half favours the left item, on the <span style="color:#c4501f;font-weight:600">right</span> half the right item; <b>1</b> in the middle means equal.</li>
+      <li>Choose <b>how strongly</b> – the further from the middle, the stronger the preference.</li></ol>`;
+DYN_DEF['guide.wizard.scale'] = `<h4>Saaty 1–9 scale</h4>
+    <table class="tbl" style="font-size:12px"><tbody>
+      <tr><td><b>1</b></td><td class="l">Equal – both contribute equally</td></tr>
+      <tr><td><b>3</b></td><td class="l">Moderate – experience slightly favours one</td></tr>
+      <tr><td><b>5</b></td><td class="l">Strong – clearly favours one</td></tr>
+      <tr><td><b>7</b></td><td class="l">Very strong – dominance shown in practice</td></tr>
+      <tr><td><b>9</b></td><td class="l">Extreme – highest possible evidence</td></tr>
+      <tr><td><b>2 4 6 8</b></td><td class="l">Between two neighbouring levels</td></tr></tbody></table>`;
+DYN_DEF['guide.wizard.tips'] = `<h4>Tips for consistent answers</h4>
+    <ul><li>Be transitive: if A &gt; B and B &gt; C, then A &gt; C should be at least as strong.</li>
+      <li>Keep 9 for overwhelming differences; most real judgments are 1–5.</li>
+      <li>Watch the CR badge under the scale: it must stay ≤ 0.10. If it turns red, revise the pair it names.</li>
+      <li>Not sure? Choose 1 for now and come back – every answer can be changed later.</li></ul>
+    <div class="ex"><b>Example:</b> Experience – a firm with 15 years and 5 similar projects versus one with 7 years and 2 similar projects: an answer of <b>2–3</b> for the first firm (“equal to moderately better”) is reasonable.</div>`;
+function wizardEvents() {
+  const w = $('#wizard');
+  w.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const qs = questionsFor(ui.wiz.scope), q = qs[ui.wiz.i];
+    if (b.dataset.sc != null && q && q.t === 'pair') {
+      const k = +b.dataset.sc, s = SCALE[k];
+      setPair(q.map, q.x.id, q.y.id, k === 8 ? '1' : k < 8 ? String(s) : '1/' + s);
+      changed(false); renderWizard();
+      const scope = ui.wiz.scope, at = ui.wiz.i;
+      clearTimeout(wizardEvents.t);
+      wizardEvents.t = setTimeout(() => {
+        if (ui.tab !== 't-guide' || ui.wiz.scope !== scope || ui.wiz.i !== at) return;
+        const now = questionsFor(scope); const j = now.findIndex((qq, idx) => idx > at && !answered(qq));
+        if (j >= 0) { ui.wiz.i = j; renderWizard(); }
+      }, 450);
+    } else if (b.dataset.wznav) { ui.wiz.i = Math.max(0, Math.min(qs.length - 1, ui.wiz.i + +b.dataset.wznav)); renderWizard(); }
+    else if (b.dataset.wznext) { let j = qs.findIndex((qq, idx) => idx > ui.wiz.i && !answered(qq)); if (j < 0) j = qs.findIndex(qq => !answered(qq)); if (j >= 0) { ui.wiz.i = j; renderWizard(); } }
+    else if (b.dataset.wzgo) { ui.wiz.i = +b.dataset.wzgo; renderWizard(); }
+    else if (b.hasAttribute('data-wzclear') && q) { setPair(q.map, q.x.id, q.y.id, ''); changed(false); renderWizard(); }
+    else if (b.dataset.include) {
+      const [k, id] = b.dataset.include.split(':'); const it = (k === 'crit' ? S.criteria : S.alternatives).find(x => x.id === id);
+      if (it) { if (k === 'crit' && !it.short.trim()) it.short = autoShort(it.name); it.on = true; changed(true); toast(`“${it.name}” is now included in the analysis`); renderWizard(); }
+    } else if (b.dataset.gotab) goTab(b.dataset.gotab);
+  });
+  w.addEventListener('change', e => {
+    const t = e.target;
+    if (t.id === 'wzScope') openWizard(t.value);
+    else if (t.id === 'wzMode') { const si = scopeItem(ui.wiz.scope); si.it.mode = t.value; changed(true); ui.wiz.i = 0; renderWizard(); }
+    else if (t.id === 'wzRtype') { const q = questionsFor(ui.wiz.scope)[ui.wiz.i]; q.c.ratingType = t.value; changed(false); }
+    else if (t.id === 'wzName' || t.id === 'wzShort') { const si = scopeItem(ui.wiz.scope); if (t.id === 'wzName' && si.kind === 'crit' && !si.it.short.trim()) si.it.short = autoShort(si.it.name); changed(true); renderWizard(); }
+  });
+  w.addEventListener('input', e => {
+    const t = e.target;
+    if (t.id === 'wzName' || t.id === 'wzShort') { const si = scopeItem(ui.wiz.scope); si.it[t.id === 'wzName' ? 'name' : 'short'] = t.value; changed(false); }
+    else if (t.dataset.desc) { const c = S.criteria.find(x => x.id === t.dataset.desc); if (c) { c.desc = t.value; persist(); } }
+    else if (t.dataset.ev) { const [cid, aid] = t.dataset.ev.split('|'); const c = S.criteria.find(x => x.id === cid); if (c) { c.evidence[aid] = t.value; persist(); } }
+    else if (t.id === 'wzRate') {
+      const qs = questionsFor(ui.wiz.scope), q = qs[ui.wiz.i]; const v = t.value.trim();
+      if (v === '') delete q.c.ratings[q.a.id]; else q.c.ratings[q.a.id] = v;
+      t.style.borderColor = v === '' || A.parseValue(v) > 0 ? '' : 'var(--bad)'; changed(false);
+      const p = $('#wizard .progress i'); if (p) p.style.width = (qs.filter(answered).length / qs.length * 100).toFixed(1) + '%';
+      const btn = document.querySelector(`.qlist button[data-wzgo="${ui.wiz.i}"]`); if (btn) btn.classList.toggle('done', answered(q));
+    }
+  });
+  w.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.target.id === 'wzRate' || e.target.id === 'wzName' || e.target.id === 'wzShort')) {
+      e.preventDefault();
+      if (e.target.id !== 'wzRate') { e.target.blur(); return; }
+      const qs = questionsFor(ui.wiz.scope); let j = qs.findIndex((qq, idx) => idx > ui.wiz.i && !answered(qq));
+      if (j < 0) j = Math.min(qs.length - 1, ui.wiz.i + 1);
+      ui.wiz.i = j; renderWizard(); const r = $('#wzRate'); if (r) r.focus();
+    }
+  });
+}
+
+/* ======================= matrix editor ======================= */
+function matrixHTML(items, map, labelFn, key) {
+  const m = matrixFrom(items, map), n = items.length;
+  let h = `<table class="tbl mx"><thead><tr><th class="l">Row ∖ Column</th>${items.map(it => `<th title="${esc(it.name)}">${esc(labelFn(it))}</th>`).join('')}</tr></thead><tbody>`;
+  for (let i = 0; i < n; i++) {
+    h += `<tr><th class="rh" title="${esc(items[i].name)}">${esc(labelFn(items[i]))}</th>`;
+    for (let j = 0; j < n; j++) {
+      if (i === j) h += '<td class="diag">1</td>';
+      else if (j > i) { const st = m.cell[i + ',' + j]; h += `<td><input data-k="${key}" data-i="${i}" data-j="${j}" class="${st === 'err' ? 'err' : st === 'empty' ? 'empty' : ''}" value="${esc(pairText(map, items[i].id, items[j].id))}" list="saatyList" aria-label="${esc(items[i].name)} versus ${esc(items[j].name)}" autocomplete="off"></td>`; }
+      else { const v = m.M[i][j]; h += `<td class="recip" data-r="${key}:${i},${j}">${A.inRange(v) ? esc(A.toFraction(v)) : ''}</td>`; }
+    }
+    h += '</tr>';
+  }
+  return h + '</tbody></table>';
+}
+function resultHTML(r, items, labelFn, key) {
+  if (!items.length) return '<div class="note">No item in use.</div>';
+  if (!r.ready) return `<div class="note">${incompleteNote(r)}. Results appear when the matrix is complete (values between 1/9 and 9).</div>`;
+  const n = items.length;
+  let h = `<div class="kpis"><div class="kpi"><small>n</small><b>${n}</b></div><div class="kpi"><small>λmax</small><b>${f4(r.lambda)}</b></div><div class="kpi"><small>CI</small><b>${f4(r.CI)}</b></div><div class="kpi"><small>RI</small><b>${r.RI.toFixed(2)}</b></div><div class="kpi"><small>CR</small><b>${n <= 2 ? 'n/a' : f4(r.CR)}</b></div><div style="align-self:center">${crBadge(r)}</div></div>`;
+  if (!r.ok && r.suggestion) {
+    const s = r.suggestion;
+    h += `<div class="note bad"><b>Inconsistent judgments (CR &gt; 0.10).</b> The most inconsistent cell is <b>${esc(labelFn(items[s.i]))}</b> vs <b>${esc(labelFn(items[s.j]))}</b> = ${esc(A.toFraction(s.current))}. The weights imply ≈ ${s.ideal.toFixed(2)}; the nearest Saaty value is <b>${esc(A.toFraction(s.suggested))}</b>, which would give CR = ${f4(s.crAfter)}.
+      <button class="btn small noprint" data-apply="${key}" data-i="${s.i}" data-j="${s.j}" data-v="${esc(A.toFraction(s.suggested))}" style="margin-left:6px">Apply suggestion</button></div>`;
+  }
+  const best = r.w.indexOf(Math.max(...r.w));
+  h += `<table class="tbl"><thead><tr><th class="l">Element</th><th>Weight w</th><th>%</th><th>(Aw)ᵢ</th><th>(Aw)ᵢ / wᵢ</th></tr></thead><tbody>` +
+    items.map((it, i) => `<tr class="${i === best ? 'best' : ''}"><td class="l">${esc(labelFn(it))}</td><td class="mono">${f4(r.w[i])}</td><td class="mono">${pct(r.w[i])}</td><td class="mono">${f4(r.Aw[i])}</td><td class="mono">${f4(r.ratio[i])}</td></tr>`).join('') +
+    `<tr><th class="l">Sum</th><th class="mono">${f4(r.w.reduce((a, b) => a + b, 0))}</th><th></th><th></th><th></th></tr></tbody></table>`;
+  if (S.method === 'average') {
+    const d = r.detail;
+    h += `<details><summary>Show calculation steps (column sums and normalised matrix)</summary><div class="scroll"><table class="tbl" style="margin-top:8px"><thead><tr><th class="l"></th>${items.map(it => `<th>${esc(labelFn(it))}</th>`).join('')}<th>Row average = w</th></tr></thead><tbody>
+      <tr><th class="l">Column sum Sⱼ</th>${d.colSum.map(x => `<td class="mono">${f4(x)}</td>`).join('')}<td></td></tr>
+      ${d.norm.map((row, i) => `<tr><td class="l">${esc(labelFn(items[i]))}</td>${row.map(x => `<td class="mono">${f4(x)}</td>`).join('')}<td class="mono"><b>${f4(r.w[i])}</b></td></tr>`).join('')}
+      </tbody></table></div><p class="sub" style="margin-top:6px">nᵢⱼ = aᵢⱼ / Sⱼ ; wᵢ = average of row i ; λmax = average of (Aw)ᵢ/wᵢ ; CI = (λmax − n)/(n − 1) ; CR = CI/RI.</p></details>`;
+  } else h += `<p class="sub" style="margin-top:6px">Method: ${esc(A.METHODS[S.method].label)}. λmax = average of (Aw)ᵢ/wᵢ.</p>`;
+  return h;
+}
+function renderCriteria() {
+  const crits = actC();
+  $('#critMatrix').innerHTML = matrixHTML(crits, S.critPW, critLabel, 'crit');
+  $('#critResult').innerHTML = resultHTML(R.crit, crits, critLabel, 'crit');
+}
+function ratingNote(r) { return r.ready ? '' : `<div class="note">${r.missing ? r.missing + ' value(s) missing' : ''}${r.missing && r.invalid ? ' · ' : ''}${r.invalid ? r.invalid + ' invalid value(s) – values must be positive numbers' : ''}.</div>`; }
+function renderAlts() {
+  const crits = actC(), alts = actA();
+  if (!crits.find(c => c.id === ui.altCrit)) ui.altCrit = crits.length ? crits[0].id : null;
+  if (!ui.altCrit) { $('#critPills').innerHTML = ''; $('#altPanel').innerHTML = '<div class="note">No criterion in use.</div>'; return; }
+  $('#critPills').innerHTML = crits.map((c, j) => `<button class="pill ${c.id === ui.altCrit ? 'active' : ''}" data-crit="${c.id}"><span class="dot ${statusDot(R.per[j])}"></span>${esc(critLabel(c))}</button>`).join('');
+  const j = crits.findIndex(c => c.id === ui.altCrit), c = crits[j], r = R.per[j];
+  let h = `<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:10px"><b>${esc(critName(c))}</b>
+    <div class="seg noprint" role="group" aria-label="Input mode"><button data-mode="pairwise" class="${c.mode === 'pairwise' ? 'on' : ''}">Pairwise comparison</button><button data-mode="rating" class="${c.mode === 'rating' ? 'on' : ''}">Direct rating</button></div><span id="altBadge">${crBadge(r)}</span>
+    <button class="btn small noprint" data-wiz="altmatrix:${c.id}">Answer step by step…</button></div>`;
+  if (c.mode === 'pairwise') {
+    h += `<p class="sub">How strongly is the <b>row</b> company preferred to the <b>column</b> company with respect to “${esc(critName(c))}”?</p>
+      <div class="noprint" style="margin-bottom:8px"><button class="btn small" data-fill="alt">Fill empty cells with 1</button></div>
+      <div class="scroll">${matrixHTML(alts, c.pw, altLabel, 'alt')}</div><div id="altResult">${resultHTML(r, alts, altLabel, 'alt')}</div>`;
+  } else {
+    h += `<p class="sub">Enter a positive measured value for each company. Priorities are ratio-normalised: <b>benefit</b> wᵢ = xᵢ / Σx, <b>cost</b> wᵢ = (1/xᵢ) / Σ(1/x).</p>
+      <label>Direction <select class="sel" id="ratingType"><option value="benefit" ${c.ratingType === 'benefit' ? 'selected' : ''}>Benefit – higher is better</option><option value="cost" ${c.ratingType === 'cost' ? 'selected' : ''}>Cost – lower is better</option></select></label>
+      <div class="scroll"><table class="tbl mx" style="margin-top:10px;max-width:680px"><thead><tr><th class="l">Company</th><th>Value</th><th>Priority</th><th class="l">Evidence</th></tr></thead><tbody>
+      ${alts.map((a, k) => { const v = c.ratings[a.id] == null ? '' : c.ratings[a.id]; const bad = v !== '' && !(A.parseValue(v) > 0); return `<tr><td class="l">${esc(altLabel(a))}</td><td><input data-rate="${a.id}" value="${esc(v)}" class="${bad ? 'err' : v === '' ? 'empty' : ''}" style="width:110px"></td><td class="mono" data-pr="${k}">${r.ready ? f4(r.w[k]) : ''}</td><td class="l" style="font-size:12px;color:var(--text-2)">${esc(c.evidence[a.id] || '')}</td></tr>`; }).join('')}
+      </tbody></table></div><div id="altResult">${ratingNote(r)}</div>`;
+  }
+  $('#altPanel').innerHTML = h;
+}
+
+/* ======================= charts ======================= */
+function niceScale(max, target = 5) {
+  const raw = max / target, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(st => st >= raw);
+  return { step, max: Math.ceil(max / step) * step, dec: Math.max(0, -Math.floor(Math.log10(step)) + (step / mag === 2.5 ? 1 : 0)) };
+}
+const seriesColor = k => (k < PALETTE.length ? PALETTE[k] : '#a3a29c');
+function svgBar(labels, values, hi, xmax, ref) {
+  const W = 520, lh = 30, top = 10, left = 150, right = 58, H = top + lh * labels.length + 28;
+  const ns = niceScale(xmax); xmax = ns.max;
+  const x = v => left + (W - left - right) * v / xmax;
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">`;
+  for (let v = 0; v <= xmax + 1e-9; v += ns.step) { const X = x(v); s += `<line x1="${X}" x2="${X}" y1="${top}" y2="${H - 24}" stroke="#e6e5e0"/><text x="${X}" y="${H - 8}" font-size="11" fill="#8a8984" text-anchor="middle">${v.toFixed(ns.dec)}</text>`; }
+  if (ref != null) s += `<line x1="${x(ref)}" x2="${x(ref)}" y1="${top}" y2="${H - 24}" stroke="#8a8984" stroke-dasharray="4 4"/>`;
+  labels.forEach((l, i) => {
+    const y = top + i * lh;
+    s += `<text x="${left - 8}" y="${y + 19}" font-size="12.5" text-anchor="end" fill="#1b1b19">${esc(l)}</text>`;
+    s += `<rect x="${left}" y="${y + 6}" width="${Math.max(0, x(values[i]) - left)}" height="18" rx="3" fill="${i === hi ? '#2a78d6' : '#9ec5f4'}"><title>${esc(l)}: ${f4(values[i])}</title></rect>`;
+    s += `<text x="${x(values[i]) + 6}" y="${y + 19}" font-size="12" fill="#1b1b19" stroke="#fff" stroke-width="3" paint-order="stroke" ${i === hi ? 'font-weight="700"' : ''}>${f4(values[i])}</text>`;
+  });
+  return s + '</svg>';
+}
+function svgStacked(labels, contrib, names) {
+  const W = 760, lh = 32, top = 8, left = 190, right = 70, H = top + lh * labels.length + 26;
+  const totals = contrib.map(r => r.reduce((a, b) => a + b, 0)), ns = niceScale(Math.max(...totals) * 1.1), xmax = ns.max;
+  const x = v => (W - left - right) * v / xmax;
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">`;
+  for (let v = 0; v <= xmax + 1e-9; v += ns.step) s += `<line x1="${left + x(v)}" x2="${left + x(v)}" y1="${top}" y2="${H - 22}" stroke="#e6e5e0"/><text x="${left + x(v)}" y="${H - 6}" font-size="11" fill="#8a8984" text-anchor="middle">${v.toFixed(ns.dec)}</text>`;
+  labels.forEach((l, i) => {
+    const y = top + i * lh; let acc = left;
+    s += `<text x="${left - 8}" y="${y + 20}" font-size="12.5" text-anchor="end">${esc(l)}</text>`;
+    contrib[i].forEach((v, j) => { const w = x(v); s += `<rect x="${acc}" y="${y + 6}" width="${Math.max(0, w - 1.5)}" height="20" fill="${seriesColor(j)}"><title>${esc(names[j])}: ${f4(v)}</title></rect>`; acc += w; });
+    s += `<text x="${acc + 6}" y="${y + 20}" font-size="12" font-weight="700">${f4(totals[i])}</text>`;
+  });
+  return s + '</svg><div class="legend">' + names.map((n, j) => `<span><i style="background:${seriesColor(j)}"></i>${esc(n)}</span>`).join('') + '</div>';
+}
+function svgLines(pts, names, current, hiIdx) {
+  const W = 760, H = 330, L = 50, Rr = 160, T = 12, B = 34;
+  const nsY = niceScale(Math.max(...pts.flatMap(p => p.score)) * 1.05, 4), ymax = nsY.max;
+  const X = t => L + (W - L - Rr) * t, Y = v => T + (H - T - B) * (1 - v / ymax);
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">`;
+  for (let t = 0; t <= 10; t++) s += `<line x1="${X(t / 10)}" x2="${X(t / 10)}" y1="${T}" y2="${H - B}" stroke="#eeede8"/><text x="${X(t / 10)}" y="${H - B + 16}" font-size="11" fill="#8a8984" text-anchor="middle">${(t / 10).toFixed(1)}</text>`;
+  for (let v = 0; v <= ymax + 1e-9; v += nsY.step) s += `<line x1="${L}" x2="${W - Rr}" y1="${Y(v)}" y2="${Y(v)}" stroke="#eeede8"/><text x="${L - 6}" y="${Y(v) + 4}" font-size="11" fill="#8a8984" text-anchor="end">${v.toFixed(nsY.dec)}</text>`;
+  s += `<text x="${(L + W - Rr) / 2}" y="${H - 4}" font-size="11.5" fill="#52514e" text-anchor="middle">Weight of the selected criterion</text>`;
+  s += `<line x1="${X(current)}" x2="${X(current)}" y1="${T}" y2="${H - B}" stroke="#52514e" stroke-dasharray="5 4"/>`;
+  const ends = [];
+  names.forEach((n, k) => {
+    const d = pts.map((p, i) => `${i ? 'L' : 'M'}${X(p.t).toFixed(1)},${Y(p.score[k]).toFixed(1)}`).join(' ');
+    s += `<path d="${d}" fill="none" stroke="${seriesColor(k)}" stroke-width="${k === hiIdx ? 3 : 2}"><title>${esc(n)}</title></path>`;
+    ends.push({ k, y: Y(pts[pts.length - 1].score[k]) });
+  });
+  ends.sort((a, b) => a.y - b.y); for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 13) ends[i].y = ends[i - 1].y + 13;
+  ends.forEach(e => { s += `<text x="${W - Rr + 6}" y="${e.y + 4}" font-size="11.5" fill="#1b1b19"><tspan fill="${seriesColor(e.k)}">■</tspan> ${esc(names[e.k])}</text>`; });
+  return s + '</svg>';
+}
+
+/* ======================= results ======================= */
+function draftNote() {
+  const d = [...S.criteria.filter(c => !isOn(c) && c.name.trim()).map(c => `${critCode(c)} ${c.name}`), ...S.alternatives.filter(a => !isOn(a) && a.name.trim()).map(altLabel)];
+  return d.length ? `<div class="note info">Not included (drafts): ${esc(d.join(', '))}. Evaluate them in <b>Guided input</b> and include them to see their effect.</div>` : '';
+}
+function renderResults() {
+  const box = $('#results');
+  if (!R.ready) {
+    if (R.blocked) { box.innerHTML = `<div class="card">${tEl('h2', 'results.title')}<div class="note">${R.blocked}</div></div>`; return; }
+    const items = [];
+    if (!R.crit.ready) items.push(`<li>Criteria matrix: ${incompleteNote(R.crit)} <button class="btn small" data-gotab="t-criteria">Matrix</button></li>`);
+    R.per.forEach((p, j) => { if (!p.ready) items.push(`<li>${esc(critLabel(R.crits[j]))}: ${p.missing || 0} missing, ${p.invalid || 0} invalid <button class="btn small" data-goalt="${R.crits[j].id}">Matrix</button></li>`); });
+    box.innerHTML = `<div class="card">${tEl('h2', 'results.title')}<div class="note">Complete all inputs to see the overall ranking.</div><ul>${items.join('')}</ul>
+      <button class="btn primary" data-wiz="missing">Answer the missing judgments step by step</button>${draftNote()}</div>`;
+    return;
+  }
+  const sy = R.syn, alts = R.alts, crits = R.crits, n = alts.length, best = sy.order[0], second = sy.order[1];
+  const altL = alts.map(altLabel), crL = crits.map(critLabel);
+  const bad = []; if (!R.crit.ok) bad.push('criteria matrix'); R.per.forEach((p, j) => { if (p.ok === false) bad.push(crL[j]); });
+  let h = `<div class="card">${tEl('h2', 'results.title')}<p class="sub">${esc(S.goal)} · Method: ${esc(A.METHODS[S.method].label)} · ${crits.length} criteria, ${n} companies</p>
+    <div class="hero"><div><div class="sub" style="margin:0">Best alternative</div><div class="big">${esc(altL[best])}</div></div>
+    <div class="score">Overall score <b class="mono">${f4(sy.score[best])}</b> · lead over 2nd: <b class="mono">${f4(sy.score[best] - sy.score[second])}</b></div>
+    <div>${R.allOk ? '<span class="badge ok">All matrices consistent (CR ≤ 0.10)</span>' : `<span class="badge bad">Inconsistent: ${esc(bad.join(', '))}</span>`}</div></div>
+    ${R.allOk ? '' : '<div class="note bad">Some matrices have CR &gt; 0.10. The ranking is shown, but the judgments should be revised before the result is used.</div>'}${draftNote()}</div>`;
+  h += `<div class="grid2"><div class="card"><h3 style="margin-top:0">Ranking</h3><table class="tbl" id="rankTbl"><thead><tr><th>Rank</th><th class="l">Company</th><th>Score</th><th>Score %</th></tr></thead><tbody>` +
+    sy.order.map((k, r) => `<tr class="${r === 0 ? 'best' : ''}"><td>${r + 1}</td><td class="l">${esc(altL[k])}</td><td class="mono">${f4(sy.score[k])}</td><td class="mono">${pct(sy.score[k])}</td></tr>`).join('') +
+    `<tr><th></th><th class="l">Sum</th><th class="mono">${f4(sy.score.reduce((a, b) => a + b, 0))}</th><th></th></tr></tbody></table></div>
+    <div class="card"><h3 style="margin-top:0">Overall scores</h3>${svgBar(sy.order.map(k => altL[k]), sy.order.map(k => sy.score[k]), 0, Math.max(...sy.score) * 1.2, 1 / n)}<p class="sub">Dashed line = equal share 1/${n}.</p></div></div>`;
+  h += `<div class="card"><h3 style="margin-top:0">Criteria weights and local priorities</h3><div class="scroll"><table class="tbl"><thead><tr><th class="l">Company</th>${crL.map(l => `<th>${esc(l)}</th>`).join('')}<th>Score</th><th>Rank</th></tr></thead><tbody>` +
+    alts.map((a, k) => `<tr class="${k === best ? 'best' : ''}"><td class="l">${esc(altL[k])}</td>${sy.local[k].map(p => `<td class="mono">${f4(p)}</td>`).join('')}<td class="mono"><b>${f4(sy.score[k])}</b></td><td>${sy.rank[k]}</td></tr>`).join('') +
+    `<tr><th class="l">Criteria weight</th>${sy.critW.map(w => `<th class="mono">${f4(w)}</th>`).join('')}<th class="mono">${f4(sy.critW.reduce((a, b) => a + b, 0))}</th><th></th></tr></tbody></table></div>
+    <h3>Contribution of each criterion (weight × local priority)</h3>${svgStacked(sy.order.map(k => altL[k]), sy.order.map(k => sy.contrib[k]), crL)}</div>`;
+  h += `<div class="grid2"><div class="card"><h3 style="margin-top:0">Consistency summary</h3><div class="scroll"><table class="tbl"><thead><tr><th class="l">Matrix</th><th>n</th><th>λmax</th><th>CR</th><th>Status</th></tr></thead><tbody>
+    <tr><td class="l">Criteria</td><td>${crits.length}</td><td class="mono">${f4(R.crit.lambda)}</td><td class="mono">${crits.length <= 2 ? 'n/a' : f4(R.crit.CR)}</td><td>${crBadge(R.crit)}</td></tr>` +
+    R.per.map((p, j) => `<tr><td class="l">${esc(crL[j])}</td><td>${n}</td><td class="mono">${p.mode === 'rating' ? '–' : f4(p.lambda)}</td><td class="mono">${p.mode === 'rating' ? '–' : (n <= 2 ? 'n/a' : f4(p.CR))}</td><td>${crBadge(p)}</td></tr>`).join('') +
+    `</tbody></table></div></div><div class="card"><h3 style="margin-top:0">Robustness – the three priority methods</h3><div class="scroll"><table class="tbl"><thead><tr><th class="l">Company</th>${Object.keys(A.METHODS).map(m => `<th>${m === 'average' ? 'Norm. average' : m === 'geometric' ? 'Geometric mean' : 'Eigenvector'}</th>`).join('')}</tr></thead><tbody>` +
+    alts.map((a, k) => `<tr><td class="l">${esc(altL[k])}</td>${Object.keys(A.METHODS).map(m => `<td class="mono">${f4(R.byMethod[m].score[k])} <span style="color:var(--muted)">(#${R.byMethod[m].rank[k]})</span></td>`).join('')}</tr>`).join('') +
+    `</tbody></table></div><p class="sub" style="margin-top:6px">${(() => { const lead = Object.keys(A.METHODS).map(m => R.byMethod[m].order[0]); return lead.every(x => x === lead[0]) ? `All three methods select <b>${esc(altL[lead[0]])}</b>.` : '<b>The methods disagree on the best alternative</b> – the decision is sensitive to the calculation method.'; })()}</p></div></div>`;
+  box.innerHTML = h;
+}
+function renderSens() {
+  const crits = actC(), sel = $('#sensCrit');
+  if (!crits.find(c => c.id === ui.sensCrit)) ui.sensCrit = crits.length ? crits[0].id : null;
+  sel.innerHTML = crits.map(c => `<option value="${c.id}" ${c.id === ui.sensCrit ? 'selected' : ''}>${esc(critLabel(c))}</option>`).join('');
+  if (!R.ready) { $('#sensOut').innerHTML = '<div class="note">Complete all inputs first.</div>'; return; }
+  const j = crits.findIndex(c => c.id === ui.sensCrit);
+  const se = A.sensitivity(R.syn.critW, R.syn.local, j, 200);
+  const names = R.alts.map(altLabel), lead = R.syn.order[0];
+  const txt = se.switches.length ? 'The best alternative changes when the weight of this criterion crosses: ' + se.switches.map(s => `<b>${s.t.toFixed(3)}</b> (${esc(names[s.from])} → ${esc(names[s.to])})`).join(', ') + '.'
+    : `<b>${esc(names[lead])}</b> remains the best alternative over the whole range 0–1 of this weight.`;
+  $('#sensOut').innerHTML = `<div class="kpis"><div class="kpi"><small>Current weight</small><b>${f4(R.syn.critW[j])}</b></div></div>${svgLines(se.pts, names, R.syn.critW[j], lead)}<div class="note info">${txt}</div>`;
+}
+
+/* ======================= CSV ======================= */
+function exportCsv() {
+  if (!R.ready) { toast('Complete all inputs before exporting'); return; }
+  const q = v => `"${String(v).replace(/"/g, '""')}"`, rows = [];
+  const crL = R.crits.map(critLabel), altL = R.alts.map(altLabel);
+  rows.push(['Goal', S.goal], ['Method', A.METHODS[S.method].label], []);
+  rows.push(['Criterion', 'Weight', 'CR of companies matrix']);
+  R.crits.forEach((c, j) => rows.push([c.name, R.syn.critW[j].toFixed(6), R.per[j].mode === 'rating' ? 'direct rating' : (R.per[j].n <= 2 ? 'n/a' : R.per[j].CR.toFixed(6))]));
+  rows.push(['Criteria matrix CR', R.crits.length <= 2 ? 'n/a' : R.crit.CR.toFixed(6)], []);
+  rows.push(['Company', ...crL, 'Score', 'Rank']);
+  R.alts.forEach((a, k) => rows.push([altL[k], ...R.syn.local[k].map(x => x.toFixed(6)), R.syn.score[k].toFixed(6), R.syn.rank[k]]));
+  download('ahp-results.csv', '﻿' + rows.map(r => r.map(q).join(',')).join('\r\n'), 'text/csv');
+}
+
+/* ======================= update cycle ======================= */
+function changed(full) {
+  R = analyseAll(); persist();
+  $('#goalLine').textContent = S.goal || 'Analytic Hierarchy Process · Saaty';
+  $('#method').value = S.method;
+  renderTabs();
+  if (full) { renderSetup(); renderCriteria(); renderAlts(); } else refreshLight();
+  renderResults(); renderSens(); applyEditable();
+}
+function refreshLight() { // update result panels and statuses without rebuilding inputs that may have focus
+  const crits = actC(), alts = actA();
+  $('#critResult').innerHTML = resultHTML(R.crit, crits, critLabel, 'crit');
+  updateMatrixCells('crit', crits, S.critPW);
+  const j = crits.findIndex(c => c.id === ui.altCrit);
+  if (j >= 0) {
+    const c = crits[j], r = R.per[j];
+    document.querySelectorAll('#critPills .pill').forEach((p, k) => { if (R.per[k]) p.querySelector('.dot').className = 'dot ' + statusDot(R.per[k]); });
+    if (c.mode === 'pairwise') { updateMatrixCells('alt', alts, c.pw); const ar = $('#altResult'); if (ar) ar.innerHTML = resultHTML(r, alts, altLabel, 'alt'); }
+    else {
+      document.querySelectorAll('[data-pr]').forEach(td => td.textContent = r.ready ? f4(r.w[+td.dataset.pr]) : '');
+      document.querySelectorAll('[data-rate]').forEach(inp => { const v = inp.value.trim(); inp.className = v === '' ? 'empty' : (A.parseValue(v) > 0 ? '' : 'err'); });
+      const ar = $('#altResult'); if (ar) ar.innerHTML = ratingNote(r);
+    }
+    const b = $('#altBadge'); if (b) b.innerHTML = crBadge(r);
+  }
+  document.querySelectorAll('#critList .irow, #altList .irow').forEach(row => {
+    const c = S.criteria.find(x => x.id === row.dataset.id), a = S.alternatives.find(x => x.id === row.dataset.id);
+    const st = row.children[c ? 5 : 3]; if (st && (c || a)) st.innerHTML = c ? itemStatus('crit', c) : itemStatus('alt', a);
+  });
+  const nc = actC().length, na = actA().length;
+  $('#nCrit').textContent = `${nc} in use · ${S.criteria.length - nc} draft`; $('#nAlt').textContent = `${na} in use · ${S.alternatives.length - na} draft`;
+}
+function updateMatrixCells(key, items, map) {
+  const m = matrixFrom(items, map);
+  document.querySelectorAll(`input[data-k="${key}"]`).forEach(inp => { const st = m.cell[inp.dataset.i + ',' + inp.dataset.j]; inp.classList.toggle('err', st === 'err'); inp.classList.toggle('empty', st === 'empty'); });
+  document.querySelectorAll(`[data-r^="${key}:"]`).forEach(td => { const [i, j] = td.dataset.r.split(':')[1].split(',').map(Number); const v = m.M[i] && m.M[i][j]; td.textContent = A.inRange(v) ? A.toFraction(v) : ''; });
+}
+
+/* ======================= events ======================= */
+function bind() {
+  $('#method').innerHTML = Object.entries(A.METHODS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('');
+  $('#method').onchange = e => { S.method = e.target.value; changed(true); if (ui.tab === 't-guide') renderWizard(); };
+  $('#tabs').onclick = e => { const b = e.target.closest('button[data-tab]'); if (b) goTab(b.dataset.tab); };
+  $('#goal').oninput = e => { S.goal = e.target.value; changed(false); };
+  ['input', 'click', 'change'].forEach(ev => {
+    $('#critList').addEventListener(ev, e => onListEvent(e, 'c'));
+    $('#altList').addEventListener(ev, e => onListEvent(e, 'a'));
+  });
+  // when a name field is left, refresh the other views (the setup inputs themselves are not rebuilt, so focus is kept)
+  $('#t-setup').addEventListener('focusout', e => {
+    const t = e.target; if (!(t.dataset && t.dataset.f && t.tagName === 'INPUT')) return;
+    const row = t.closest('.irow'); const c = row && S.criteria.find(x => x.id === row.dataset.id);
+    if (c && t.dataset.f === 'name' && c.name.trim() && !c.short.trim()) { c.short = autoShort(c.name); const s = row.querySelector('[data-f="short"]'); if (s) s.value = c.short; }
+    R = analyseAll(); persist(); renderCriteria(); renderAlts(); renderResults(); renderSens(); refreshLight();
+    const cb = $('#setupCallout'); if (cb) { const keep = document.activeElement; renderSetupCallout(); if (keep && keep.focus) keep.focus(); }
+  });
+  $('#addCrit').onclick = () => { S.criteria.push(newCrit('', '', false)); changed(true); const rows = document.querySelectorAll('#critList .irow'); rows[rows.length - 1].querySelector('[data-f="name"]').focus(); };
+  $('#addAlt').onclick = () => { S.alternatives.push(newAlt('', false)); changed(true); const rows = document.querySelectorAll('#altList .irow'); rows[rows.length - 1].querySelector('[data-f="name"]').focus(); };
+  wizardEvents();
+  document.addEventListener('input', e => {
+    const t = e.target;
+    if (t.dataset.k) {
+      const i = +t.dataset.i, j = +t.dataset.j;
+      if (t.dataset.k === 'crit') { const cs = actC(); setPair(S.critPW, cs[i].id, cs[j].id, t.value); }
+      else { const c = S.criteria.find(x => x.id === ui.altCrit), as = actA(); setPair(c.pw, as[i].id, as[j].id, t.value); }
+      changed(false);
+    } else if (t.dataset.rate) {
+      const c = S.criteria.find(x => x.id === ui.altCrit); const v = t.value.trim(); if (v === '') delete c.ratings[t.dataset.rate]; else c.ratings[t.dataset.rate] = v; changed(false);
+    }
+  });
+  document.addEventListener('change', e => {
+    if (e.target.id === 'ratingType') { S.criteria.find(x => x.id === ui.altCrit).ratingType = e.target.value; changed(true); }
+    if (e.target.id === 'sensCrit') { ui.sensCrit = e.target.value; renderSens(); }
+  });
+  document.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || b.closest('#wizard') || b.closest('#critList') || b.closest('#altList')) return;
+    if (b.dataset.crit) { ui.altCrit = b.dataset.crit; renderAlts(); }
+    else if (b.dataset.mode) { const c = S.criteria.find(x => x.id === ui.altCrit); if (c.mode !== b.dataset.mode) { c.mode = b.dataset.mode; changed(true); } }
+    else if (b.dataset.fill) {
+      const fill = (items, map) => { for (let i = 0; i < items.length; i++) for (let j = i + 1; j < items.length; j++) if (!getPair(map, items[i].id, items[j].id)) setPair(map, items[i].id, items[j].id, '1'); };
+      if (b.dataset.fill === 'crit') fill(actC(), S.critPW); else fill(actA(), S.criteria.find(x => x.id === ui.altCrit).pw);
+      changed(true);
+    } else if (b.dataset.apply) {
+      const i = +b.dataset.i, j = +b.dataset.j, items = b.dataset.apply === 'crit' ? actC() : actA();
+      const map = b.dataset.apply === 'crit' ? S.critPW : S.criteria.find(x => x.id === ui.altCrit).pw;
+      snapshot(); setPair(map, items[i].id, items[j].id, b.dataset.v); changed(true); toast('Suggestion applied', { label: 'Undo', fn: undo });
+    } else if (b.dataset.wiz) openWizard(b.dataset.wiz);
+    else if (b.dataset.gotab) goTab(b.dataset.gotab);
+    else if (b.dataset.goalt) { ui.altCrit = b.dataset.goalt; goTab('t-alts'); renderAlts(); }
+  });
+  // Evaluate buttons live inside the setup lists
+  ['#critList', '#altList'].forEach(sel => $(sel).addEventListener('click', e => {
+    const b = e.target.closest('button[data-eval]'); if (!b) return;
+    const [k, id] = b.dataset.eval.split(':'); const it = (k === 'crit' ? S.criteria : S.alternatives).find(x => x.id === id);
+    if (it && !it.name.trim()) { const inp = b.closest('.irow').querySelector('[data-f="name"]'); inp.classList.add('need'); inp.focus(); toast('Type a name first'); return; }
+    openWizard(b.dataset.eval);
+  }));
+  $('#bExample').onclick = () => { snapshot(); S = exampleState(); ui.altCrit = null; ui.wiz.scope = null; changed(true); if (ui.tab === 't-guide') renderWizard(); toast('Exam example loaded', { label: 'Undo', fn: undo }); };
+  $('#bNew').onclick = () => { snapshot(); S = blankState(); ui.altCrit = null; ui.wiz.scope = null; ui.tab = 't-setup'; changed(true); toast('New blank model', { label: 'Undo', fn: undo }); };
+  $('#bSave').onclick = () => download('ahp-project.json', JSON.stringify(S, null, 2), 'application/json');
+  $('#bOpen').onclick = () => $('#fileIn').click();
+  $('#fileIn').onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => { try { const o = JSON.parse(rd.result); if (!validState(o)) throw 0; snapshot(); S = normalise(o); ui.altCrit = null; ui.wiz.scope = null; changed(true); if (ui.tab === 't-guide') renderWizard(); toast('Project opened'); } catch (err) { toast('This file is not a valid AHP project'); } };
+    rd.readAsText(f); e.target.value = '';
+  };
+  $('#bCsv').onclick = exportCsv;
+  $('#bPrint').onclick = () => window.print();
+  $('#saaty').innerHTML = `<table class="tbl" style="margin-top:8px;max-width:640px;font-size:12.5px"><thead><tr><th>Value</th><th class="l">Meaning (row compared with column)</th></tr></thead><tbody>
+    <tr><td>1</td><td class="l">Equal importance</td></tr><tr><td>3</td><td class="l">Moderate importance</td></tr><tr><td>5</td><td class="l">Strong importance</td></tr>
+    <tr><td>7</td><td class="l">Very strong importance</td></tr><tr><td>9</td><td class="l">Extreme importance</td></tr><tr><td>2, 4, 6, 8</td><td class="l">Intermediate values</td></tr>
+    <tr><td>1/3, 1/5 …</td><td class="l">Reciprocals: the column element is more important</td></tr></tbody></table>`;
+  const dl = document.createElement('datalist'); dl.id = 'saatyList';
+  dl.innerHTML = ['9', '8', '7', '6', '5', '4', '3', '2', '1', '1/2', '1/3', '1/4', '1/5', '1/6', '1/7', '1/8', '1/9'].map(v => `<option value="${v}">`).join('');
+  document.body.appendChild(dl);
+}
+function renderSetupCallout() {
+  const drafts = [...S.criteria.filter(c => !isOn(c)).map(c => `${critCode(c)} ${c.name ? '“' + esc(c.name) + '”' : '(blank)'}`), ...S.alternatives.filter(a => !isOn(a)).map(a => `${altCode(a)} ${a.name ? '“' + esc(a.name) + '”' : '(blank)'}`)];
+  $('#setupCallout').innerHTML = `<span class="ic">➕</span><div>${tEl('b', 'setup.callout')}<br>
+    <span class="sub" style="margin:0">${drafts.length ? `Draft slots ready: ${drafts.join(', ')}. Type a name, press <b>Evaluate</b> and answer the guided questions, then include it in the analysis.` : 'Use “+ Add a new company” or “+ Add a new criterion”; new items start as drafts until you evaluate and include them.'}</span></div>`;
+  applyEditable();
+}
+
+/* ======================= edit-texts events ======================= */
+function bindTexts() {
+  $('#bEdit').onclick = () => { document.body.classList.toggle('editing'); applyEditable(); if (document.body.classList.contains('editing')) toast('Edit mode: click a text with a dashed outline'); };
+  $('#bEditDone').onclick = () => { if (document.activeElement) document.activeElement.blur(); document.body.classList.remove('editing'); applyEditable(); persistNow(); toast('Texts saved'); };
+  $('#bResetTexts').onclick = () => { const old = T; T = {}; applyStaticTexts(); changed(true); if (ui.tab === 't-guide') renderWizard(); persist(); toast('All texts reset to default', { label: 'Undo', fn: () => { T = old; applyStaticTexts(); changed(true); if (ui.tab === 't-guide') renderWizard(); persist(); } }); };
+  document.addEventListener('input', e => {
+    const host = e.target.closest && e.target.closest('[data-t]');
+    if (!host || !document.body.classList.contains('editing')) return;
+    const k = host.dataset.t;
+    T[k] = host.hasAttribute('data-t-rich') ? sanitize(host.innerHTML) : host.textContent.replace(/\s+/g, ' ');
+    if (k === 'app.title') document.title = T[k];
+    persist();
+  }, true);
+  document.addEventListener('keydown', e => {
+    const host = e.target.closest && e.target.closest('[data-t]');
+    if (!host || !document.body.classList.contains('editing')) return;
+    e.stopPropagation();
+    if (e.key === 'Enter' && !host.hasAttribute('data-t-rich')) { e.preventDefault(); host.blur(); }
+    if (e.key === 'Escape') host.blur();
+  }, true);
+  document.addEventListener('focusout', e => {
+    const host = e.target.closest && e.target.closest('[data-t]');
+    if (!host) return;
+    const k = host.dataset.t;
+    if (!host.textContent.trim()) { delete T[k]; persist(); }
+    if (host.hasAttribute('data-t-rich')) host.innerHTML = sanitize(txt(k)); else host.textContent = txt(k);
+  }, true);
+  // clicks on editable text inside buttons/tabs should not trigger the button while editing
+  document.addEventListener('click', e => {
+    const host = e.target.closest && e.target.closest('[data-t]');
+    if (host && document.body.classList.contains('editing') && host.closest('button')) { e.stopPropagation(); e.preventDefault(); host.focus(); }
+  }, true);
+}
+function setStoreText(where) { // shown in the footer and edit bar
+  $('#footStore').textContent = where === 'cloud' ? 'Your data are saved in your Google account.' : 'All calculations run locally; data are saved in this browser.';
+  $('#editWhere').textContent = where === 'cloud' ? 'to your Google account' : 'in this browser';
+}
+window.AHPApp = {
+  variant: VARIANT,
+  attachCloud(c) { cloud = c; },
+  data: () => ({ project: JSON.parse(JSON.stringify(S)), texts: Object.assign({}, T) }),
+  load(data) { // from the cloud
+    if (data && data.project && validState(data.project)) S = normalise(data.project);
+    T = cleanTexts(data && data.texts);
+    ui.altCrit = null; ui.wiz.scope = null;
+    applyStaticTexts(); changed(true); if (ui.tab === 't-guide') renderWizard();
+  },
+  loadLocal() { // back to this browser's data (after sign-out)
+    const st = loadStored(); S = st ? normalise(st) : exampleState(); T = cleanTexts(loadTexts());
+    ui.altCrit = null; ui.wiz.scope = null;
+    applyStaticTexts(); changed(true); if (ui.tab === 't-guide') renderWizard();
+  },
+  setStoreText, toast
+};
+
+/* ======================= start ======================= */
+captureDefaults();
+bind(); bindTexts();
+const stored = loadStored();
+S = stored ? normalise(stored) : exampleState();
+T = cleanTexts(loadTexts());
+renderTabs.initial = true;
+R = analyseAll(); renderTabs(); applyStaticTexts();
+changed(true);
+setStoreText('local');
+if (VARIANT !== 'web') $('#acct').innerHTML = '<span>💾 Offline file – your data and texts are saved in this browser. Use <b>Save</b>/<b>Open</b> to move a project to another computer.</span>';
+window.__ahpState = () => S;
+})();
+
+</script>
+<script src="firebase-config.js"></script>
+<script type="module">
+/* Google sign-in (Firebase Authentication) + per-account storage (Cloud Firestore).
+   Each signed-in user has one private document users/{uid}; security rules allow only that user to read/write it. */
+const app = window.AHPApp, cfg = window.AHP_FIREBASE_CONFIG || null;
+const acct = document.getElementById('acct');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const GICON = '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+const show = html => { acct.innerHTML = html; };
+
+if (!cfg || !cfg.apiKey || /PASTE/i.test(cfg.apiKey)) {
+  show('<span>⚠️ Google sign-in is not configured yet – your data are saved in this browser.</span>');
+} else {
+  init().catch(err => { console.error('[AHP cloud]', err); show('<span>⚠️ The sign-in service cannot be reached (offline?) – your data are saved in this browser.</span>'); });
+}
+
+async function init() {
+  const base = 'https://www.gstatic.com/firebasejs/10.12.2/';
+  const [{ initializeApp }, A, F] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-auth.js'), import(base + 'firebase-firestore.js')]);
+  const fb = initializeApp(cfg), auth = A.getAuth(fb), db = F.getFirestore(fb);
+  A.getRedirectResult(auth).catch(() => {});
+  let user = null, timer = null, status = '';
+  const cloud = {
+    active: false,
+    save(data, now) { if (!user || !cloud.active) return; clearTimeout(timer); setStatus('saving'); timer = setTimeout(() => write(data), now ? 0 : 1000); }
+  };
+  app.attachCloud(cloud);
+
+  async function write(data) {
+    try {
+      await F.setDoc(F.doc(db, 'users', user.uid), { project: JSON.stringify(data.project), texts: data.texts || {}, email: user.email || '', updatedAt: F.serverTimestamp() });
+      setStatus('saved');
+    } catch (e) { console.error('[AHP cloud] save', e); setStatus('error'); }
+  }
+  function setStatus(s) { status = s; render(); }
+  function render() {
+    if (!user) {
+      show(`<button class="gbtn" id="gIn">${GICON} Sign in with Google</button><span>Not signed in – data are saved in this browser only. Sign in to keep your own texts and projects in your Google account.</span>`);
+      document.getElementById('gIn').onclick = signIn; return;
+    }
+    const name = user.email || user.displayName || 'Google account';
+    const st = { saving: 'Saving…', saved: '✓ Saved to your account', error: '⚠️ Could not save – check the connection', loading: 'Loading your data…' }[status] || '';
+    show(`<span class="who"><span class="av">${user.photoURL ? `<img src="${esc(user.photoURL)}" alt="" referrerpolicy="no-referrer">` : esc(name[0].toUpperCase())}</span>${esc(name)}</span><span id="syncState">${st}</span><button class="btn small" id="gOut">Sign out</button>`);
+    document.getElementById('gOut').onclick = () => A.signOut(auth);
+  }
+  async function signIn() {
+    const p = new A.GoogleAuthProvider(); p.setCustomParameters({ prompt: 'select_account' });
+    try { await A.signInWithPopup(auth, p); }
+    catch (e) {
+      if (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment') await A.signInWithRedirect(auth, p);
+      else if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') app.toast('Sign-in failed: ' + (e.code || e.message));
+    }
+  }
+  A.onAuthStateChanged(auth, async u => {
+    if (u) {
+      user = u; setStatus('loading');
+      try {
+        const snap = await F.getDoc(F.doc(db, 'users', u.uid));
+        cloud.active = true; app.setStoreText('cloud');
+        if (snap.exists()) {
+          const d = snap.data(); let project = null; try { project = JSON.parse(d.project || 'null'); } catch (e) { }
+          app.load({ project, texts: d.texts || {} }); setStatus('saved'); app.toast('Welcome back – your data were loaded from your account');
+        } else { await write(app.data()); app.toast('Signed in – your current model is now saved in your account'); }
+      } catch (e) { console.error('[AHP cloud] load', e); cloud.active = false; setStatus('error'); app.toast('Could not load your account data'); }
+    } else {
+      const was = !!user; user = null; cloud.active = false; render(); app.setStoreText('local');
+      if (was) { app.loadLocal(); app.toast('Signed out – showing the data saved in this browser'); }
+    }
+  });
+  render();
+}
+</script>
+
+</body>
+</html>
